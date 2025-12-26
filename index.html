@@ -127,128 +127,180 @@
   <footer id="footer"></footer>
 
   <script>
-    async function loadStats() {
+    const PLAYERS = ["err_daemon", "m41k", "Kathi_2905"];
+    const DAYS = 2;
+
+    async function fetchJson(url) {
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error("HTTP " + res.status + " for " + url);
+      }
+      return res.json();
+    }
+
+    async function loadPlayer(username) {
+      const uname = username.toLowerCase();
+
+      // --- Spiele der letzten X Tage ---
+      let games = [];
       try {
-        const res = await fetch("data/stats.json?_=" + Date.now());
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        const data = await res.json();
+        const archivesData = await fetchJson(`https://api.chess.com/pub/player/${uname}/games/archives`);
+        const archives = archivesData.archives || [];
+        const recentArchives = archives.slice(-3); // letzte 3 Monate um Monatswechsel abzudecken
 
-        const subtitle = document.getElementById("subtitle");
-        const updated = data.last_update_ts
-        ? new Date(data.last_update_ts * 1000)
-        : null;
+        const nowMs = Date.now();
+        const thresholdMs = nowMs - DAYS * 24 * 60 * 60 * 1000;
 
-        subtitle.textContent = updated
-        ? `Fenster: letzte ${data.days} Tage · Letztes Update (UTC): ${updated.toUTCString()}`
-        : `Fenster: letzte ${data.days} Tage · Letztes Update: unbekannt`;
-
-        const cards = document.getElementById("cards");
-        cards.innerHTML = "";
-
-        const players = data.players || [];
-
-        // Wer hat die höchste Taktikwertung?
-        let best = null;
-        for (const p of players) {
-          if (p.tactics_current != null) {
-            if (!best || p.tactics_current > best.tactics_current) {
-              best = p;
-            }
+        for (const url of recentArchives) {
+          try {
+            const data = await fetchJson(url);
+            (data.games || []).forEach(g => {
+              if (!g.end_time) return;
+              const endMs = g.end_time * 1000;
+              if (endMs >= thresholdMs) {
+                games.push({
+                  endMs,
+                  time_class: g.time_class,
+                  rated: g.rated,
+                  white: g.white && g.white.username,
+                  black: g.black && g.black.username,
+                  url: g.url
+                });
+              }
+            });
+          } catch (e) {
+            console.error("Archiv-Fehler für", username, e);
           }
         }
 
-        players.forEach(p => {
-          const card = document.createElement("div");
-          card.className = "card";
-
-          const header = document.createElement("div");
-          header.className = "card-header";
-
-          const name = document.createElement("div");
-          name.className = "username";
-          name.textContent = p.username;
-
-          const badge = document.createElement("div");
-          badge.className = "badge " + (p.active_last_days ? "active" : "inactive");
-          badge.textContent = p.active_last_days ? "AKTIV" : "INAKTIV";
-
-          header.appendChild(name);
-          header.appendChild(badge);
-          card.appendChild(header);
-
-          // Games
-          const gTitle = document.createElement("div");
-          gTitle.className = "section-title";
-          gTitle.textContent = "🕒 Partien (letzte " + p.days_window + " Tage)";
-          card.appendChild(gTitle);
-
-          if (!p.games_recent || p.games_recent.length === 0) {
-            const noGames = document.createElement("div");
-            noGames.style.fontSize = "0.85rem";
-            noGames.style.color = "#f87171";
-            noGames.textContent = "Keine beendeten Partien. Zeit, wieder zu spielen, bevor der Skill rostet! 🔥";
-            card.appendChild(noGames);
-          } else {
-            const ul = document.createElement("ul");
-            ul.className = "games-list";
-
-            p.games_recent.forEach(g => {
-              const li = document.createElement("li");
-              const date = g.end_time_ts
-                ? new Date(g.end_time_ts * 1000)
-                : null;
-                const rated = g.rated ? "Rated" : "Unrated";
-
-                li.innerHTML =
-                `<span>${date ? date.toLocaleString() : "Unbekanntes Datum"} – ${g.time_class}, ${rated}</span><br>` +
-                `<span>${g.white} vs ${g.black}</span>`;
-
-              ul.appendChild(li);
-            });
-
-            card.appendChild(ul);
-          }
-
-          // Tactics
-          const tTitle = document.createElement("div");
-          tTitle.className = "section-title";
-          tTitle.textContent = "🧠 Taktikwertung";
-          card.appendChild(tTitle);
-
-          const tDiv = document.createElement("div");
-          tDiv.className = "tactics";
-
-          if (p.tactics_current == null && p.tactics_highest == null && p.tactics_lowest == null) {
-            tDiv.textContent = "Keine Taktikdaten im API verfügbar.";
-          } else {
-            tDiv.innerHTML =
-              `Aktuell: <span class="highlight">${p.tactics_current ?? "–"}</span><br>` +
-              `Highest: ${p.tactics_highest ?? "–"} · Lowest: ${p.tactics_lowest ?? "–"}`;
-          }
-
-          card.appendChild(tDiv);
-
-          // Krone anzeigen, wenn bester Taktiker
-          if (best && best.username === p.username && p.tactics_current != null) {
-            const crown = document.createElement("div");
-            crown.style.marginTop = "0.5rem";
-            crown.style.fontSize = "0.85rem";
-            crown.innerHTML = "👑 Bester Taktiker in dieser Runde";
-            card.appendChild(crown);
-          }
-
-          cards.appendChild(card);
-        });
-
-        const footer = document.getElementById("footer");
-        footer.innerHTML = `Datenquelle: <a href="https://www.chess.com/news/view/published-data-api" target="_blank" rel="noreferrer">Chess.com Published Data API</a>`;
-      } catch (err) {
-        document.getElementById("subtitle").textContent = "Fehler beim Laden der Daten 😢";
-        console.error(err);
+        games.sort((a, b) => b.endMs - a.endMs);
+      } catch (e) {
+        console.error("Fehler beim Laden der Archives für", username, e);
       }
+
+      // --- Taktik-Stats ---
+      let tacticsCurrent = null;
+      let tacticsHigh = null;
+      let tacticsLow = null;
+
+      try {
+        const stats = await fetchJson(`https://api.chess.com/pub/player/${uname}/stats`);
+        const tactics = stats.tactics;
+        if (tactics) {
+          const last = tactics.last || {};
+          const highest = tactics.highest || {};
+          const lowest = tactics.lowest || {};
+
+          tacticsCurrent = (last.rating != null) ? last.rating :
+                           (highest.rating != null ? highest.rating : null);
+          tacticsHigh = highest.rating ?? null;
+          tacticsLow = lowest.rating ?? null;
+        }
+      } catch (e) {
+        console.error("Fehler beim Laden der Stats für", username, e);
+      }
+
+      renderCard({
+        username,
+        games,
+        tacticsCurrent,
+        tacticsHigh,
+        tacticsLow
+      });
     }
 
-    loadStats();
+    function renderCard(player) {
+      const cards = document.getElementById("cards");
+
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const header = document.createElement("div");
+      header.className = "card-header";
+
+      const name = document.createElement("div");
+      name.className = "username";
+      name.textContent = player.username;
+
+      const badge = document.createElement("div");
+      const active = player.games.length > 0;
+      badge.className = "badge " + (active ? "active" : "inactive");
+      badge.textContent = active ? "AKTIV" : "INAKTIV";
+
+      header.appendChild(name);
+      header.appendChild(badge);
+      card.appendChild(header);
+
+      // Spiele
+      const gTitle = document.createElement("div");
+      gTitle.className = "section-title";
+      gTitle.textContent = "🕒 Partien (letzte " + DAYS + " Tage)";
+      card.appendChild(gTitle);
+
+      if (!active) {
+        const noGames = document.createElement("div");
+        noGames.style.fontSize = "0.85rem";
+        noGames.style.color = "#f87171";
+        noGames.textContent = "Keine beendeten Partien. Zeit, wieder zu spielen, bevor der Skill rostet! 🔥";
+        card.appendChild(noGames);
+      } else {
+        const ul = document.createElement("ul");
+        ul.className = "games-list";
+
+        player.games.slice(0, 5).forEach(g => {
+          const li = document.createElement("li");
+          const date = new Date(g.endMs);
+          const rated = g.rated ? "Rated" : "Unrated";
+          li.innerHTML =
+            `<span>${date.toLocaleString()} – ${g.time_class}, ${rated}</span><br>` +
+            `<span>${g.white} vs ${g.black}</span>`;
+          ul.appendChild(li);
+        });
+
+        card.appendChild(ul);
+      }
+
+      // Taktiken
+      const tTitle = document.createElement("div");
+      tTitle.className = "section-title";
+      tTitle.textContent = "🧠 Taktikwertung";
+      card.appendChild(tTitle);
+
+      const tDiv = document.createElement("div");
+      tDiv.className = "tactics";
+
+      if (
+        player.tacticsCurrent == null &&
+        player.tacticsHigh == null &&
+        player.tacticsLow == null
+      ) {
+        tDiv.textContent = "Keine Taktikdaten im API verfügbar.";
+      } else {
+        tDiv.innerHTML =
+          `Aktuell: <span class="highlight">${player.tacticsCurrent ?? "–"}</span><br>` +
+          `Highest: ${player.tacticsHigh ?? "–"} · Lowest: ${player.tacticsLow ?? "–"}`;
+      }
+
+      card.appendChild(tDiv);
+
+      cards.appendChild(card);
+    }
+
+    async function init() {
+      const subtitle = document.getElementById("subtitle");
+      subtitle.textContent = "Lade Daten direkt von chess.com…";
+
+      await Promise.all(PLAYERS.map(loadPlayer));
+
+      const now = new Date();
+      subtitle.textContent = `Fenster: letzte ${DAYS} Tage · Stand: ${now.toLocaleString()}`;
+
+      const footer = document.getElementById("footer");
+      footer.innerHTML =
+        `Datenquelle: <a href="https://www.chess.com/news/view/published-data-api" target="_blank" rel="noreferrer">Chess.com Published Data API</a>`;
+    }
+
+    init();
   </script>
 </body>
 </html>

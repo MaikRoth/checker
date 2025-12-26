@@ -48,7 +48,7 @@ def get_recent_games(username: str, days: int = 2):
             if end_dt >= threshold:
                 recent_games.append({
                     "url": g.get("url"),
-                    "end_time": end_dt.isoformat(),
+                    "end_time_ts": int(end_dt.timestamp()),  # <- nur Unix-Timestamp
                     "time_class": g.get("time_class"),
                     "rated": g.get("rated"),
                     "white": (g.get("white") or {}).get("username"),
@@ -118,11 +118,13 @@ def main():
     for p in PLAYERS:
         results.append(analyze_player(p, days=DAYS))
 
+    now = datetime.now(timezone.utc)
     data = {
-        "last_update_utc": datetime.now(timezone.utc).isoformat(),
+        "last_update_ts": int(now.timestamp()),
         "days": DAYS,
         "players": results,
     }
+
 
     os.makedirs("data", exist_ok=True)
     with open("data/stats.json", "w", encoding="utf-8") as f:

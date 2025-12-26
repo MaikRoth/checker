@@ -134,7 +134,13 @@
         const data = await res.json();
 
         const subtitle = document.getElementById("subtitle");
-        subtitle.textContent = `Fenster: letzte ${data.days} Tage · Letztes Update (UTC): ${new Date(data.last_update_utc).toLocaleString()}`;
+        const updated = data.last_update_ts
+        ? new Date(data.last_update_ts * 1000)
+        : null;
+
+        subtitle.textContent = updated
+        ? `Fenster: letzte ${data.days} Tage · Letztes Update (UTC): ${updated.toUTCString()}`
+        : `Fenster: letzte ${data.days} Tage · Letztes Update: unbekannt`;
 
         const cards = document.getElementById("cards");
         cards.innerHTML = "";
@@ -188,11 +194,15 @@
 
             p.games_recent.forEach(g => {
               const li = document.createElement("li");
-              const date = new Date(g.end_time);
-              const rated = g.rated ? "Rated" : "Unrated";
-              li.innerHTML =
-                `<span>${date.toLocaleString()} – ${g.time_class}, ${rated}</span><br>` +
+              const date = g.end_time_ts
+                ? new Date(g.end_time_ts * 1000)
+                : null;
+                const rated = g.rated ? "Rated" : "Unrated";
+
+                li.innerHTML =
+                `<span>${date ? date.toLocaleString() : "Unbekanntes Datum"} – ${g.time_class}, ${rated}</span><br>` +
                 `<span>${g.white} vs ${g.black}</span>`;
+
               ul.appendChild(li);
             });
 

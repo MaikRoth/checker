@@ -105,6 +105,42 @@
       font-weight: 600;
     }
 
+    /* Win/Loss Bar */
+    .wl-wrapper {
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    .wl-text {
+      margin-bottom: 0.2rem;
+      color: #d1d5db;
+    }
+
+    .wl-bar {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #1f2937;
+      display: flex;
+    }
+
+    .wl-segment {
+      height: 100%;
+    }
+
+    .wl-win {
+      background: #16a34a; /* grün */
+    }
+
+    .wl-draw {
+      background: #6b7280; /* grau */
+    }
+
+    .wl-loss {
+      background: #dc2626; /* rot */
+    }
+
     footer {
       font-size: 0.8rem;
       color: #6b7280;
@@ -128,7 +164,7 @@
 
   <script>
     const PLAYERS = ["err_daemon", "m41k", "Kathi_2905"];
-    const DAYS = 2;
+    const DAYS = 7; // ⬅️ jetzt 7 Tage
 
     async function fetchJson(url) {
       const res = await fetch(url);
@@ -143,6 +179,10 @@
 
       // --- Spiele der letzten X Tage ---
       let games = [];
+      let wins = 0;
+      let losses = 0;
+      let draws = 0;
+
       try {
         const archivesData = await fetchJson(`https://api.chess.com/pub/player/${uname}/games/archives`);
         const archives = archivesData.archives || [];
@@ -158,12 +198,42 @@
               if (!g.end_time) return;
               const endMs = g.end_time * 1000;
               if (endMs >= thresholdMs) {
+                const whiteUser = g.white && g.white.username;
+                const blackUser = g.black && g.black.username;
+                const whiteResult = g.white && g.white.result;
+                const blackResult = g.black && g.black.result;
+
+                // Win/Loss/Draw für diesen Spieler bestimmen
+                const isWhite = whiteUser && whiteUser.toLowerCase() === uname;
+                const isBlack = blackUser && blackUser.toLowerCase() === uname;
+
+                let myResult = null;
+                let oppResult = null;
+
+                if (isWhite) {
+                  myResult = whiteResult;
+                  oppResult = blackResult;
+                } else if (isBlack) {
+                  myResult = blackResult;
+                  oppResult = whiteResult;
+                }
+
+                if (myResult) {
+                  if (myResult === "win") {
+                    wins++;
+                  } else if (oppResult === "win") {
+                    losses++;
+                  } else {
+                    draws++;
+                  }
+                }
+
                 games.push({
                   endMs,
                   time_class: g.time_class,
                   rated: g.rated,
-                  white: g.white && g.white.username,
-                  black: g.black && g.black.username,
+                  white: whiteUser,
+                  black: blackUser,
                   url: g.url
                 });
               }
@@ -205,8 +275,59 @@
         games,
         tacticsCurrent,
         tacticsHigh,
-        tacticsLow
+        tacticsLow,
+        wins,
+        losses,
+        draws
       });
+    }
+
+    function renderWLBar(parent, wins, losses, draws) {
+      const total = wins + losses + draws;
+      if (!total) {
+        const noData = document.createElement("div");
+        noData.className = "wl-wrapper";
+        noData.textContent = "Keine Partien im Zeitraum – keine Winrate.";
+        parent.appendChild(noData);
+        return;
+      }
+
+      const winPct = Math.round((wins / total) * 100);
+      const lossPct = Math.round((losses / total) * 100);
+      // Rest geht in Draws, damit wir immer 100% haben
+      const drawPct = 100 - winPct - lossPct;
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "wl-wrapper";
+
+      const text = document.createElement("div");
+      text.className = "wl-text";
+      text.textContent =
+        `Wins: ${wins} · Losses: ${losses} · Draws: ${draws} ` +
+        `· Winrate: ${winPct}%`;
+
+      const bar = document.createElement("div");
+      bar.className = "wl-bar";
+
+      const winSeg = document.createElement("div");
+      winSeg.className = "wl-segment wl-win";
+      winSeg.style.width = winPct + "%";
+
+      const drawSeg = document.createElement("div");
+      drawSeg.className = "wl-segment wl-draw";
+      drawSeg.style.width = drawPct + "%";
+
+      const lossSeg = document.createElement("div");
+      lossSeg.className = "wl-segment wl-loss";
+      lossSeg.style.width = lossPct + "%";
+
+      bar.appendChild(winSeg);
+      bar.appendChild(drawSeg);
+      bar.appendChild(lossSeg);
+
+      wrapper.appendChild(text);
+      wrapper.appendChild(bar);
+      parent.appendChild(wrapper);
     }
 
     function renderCard(player) {
@@ -241,7 +362,8 @@
         const noGames = document.createElement("div");
         noGames.style.fontSize = "0.85rem";
         noGames.style.color = "#f87171";
-        noGames.textContent = "Keine beendeten Partien. Zeit, wieder zu spielen, bevor der Skill rostet! 🔥";
+        noGames.textContent =
+          "Keine beendeten Partien. Zeit, wieder zu spielen, bevor der Skill rostet! 🔥";
         card.appendChild(noGames);
       } else {
         const ul = document.createElement("ul");
@@ -259,6 +381,9 @@
 
         card.appendChild(ul);
       }
+
+      // Win/Loss/Draw Grafik
+      renderWLBar(card, player.wins, player.losses, player.draws);
 
       // Taktiken
       const tTitle = document.createElement("div");
@@ -293,7 +418,8 @@
       await Promise.all(PLAYERS.map(loadPlayer));
 
       const now = new Date();
-      subtitle.textContent = `Fenster: letzte ${DAYS} Tage · Stand: ${now.toLocaleString()}`;
+      subtitle.textContent =
+        `Fenster: letzte ${DAYS} Tage · Stand: ${now.toLocaleString()}`;
 
       const footer = document.getElementById("footer");
       footer.innerHTML =

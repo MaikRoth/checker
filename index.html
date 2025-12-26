@@ -141,6 +141,48 @@
       background: #dc2626; /* rot */
     }
 
+    /* Achievements */
+    .achievements {
+      margin-top: 0.35rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      font-size: 0.75rem;
+    }
+
+    .ach-badge {
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid #374151;
+      background: #020617;
+      color: #e5e7eb;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      white-space: nowrap;
+      cursor: default;
+    }
+
+    .ach-badge.gold {
+      border-color: #fbbf24;
+      color: #facc15;
+    }
+
+    .ach-badge.silver {
+      border-color: #9ca3af;
+      color: #e5e7eb;
+    }
+
+    .ach-badge.bronze {
+      border-color: #f97316;
+      color: #fed7aa;
+    }
+
+    .ach-badge.fail {
+      border-color: #ef4444;
+      color: #fecaca;
+    }
+
     footer {
       font-size: 0.8rem;
       color: #6b7280;
@@ -163,8 +205,8 @@
   <footer id="footer"></footer>
 
   <script>
-    const PLAYERS = ["err_daemon", "m41k", "Kathi_2905"];
-    const DAYS = 7; // ⬅️ jetzt 7 Tage
+    const PLAYERS = ["ERR_Daemon", "M41K", "Kathi_2905"];
+    const DAYS = 7; // Zeitraum: letzte 7 Tage
 
     async function fetchJson(url) {
       const res = await fetch(url);
@@ -177,16 +219,16 @@
     async function loadPlayer(username) {
       const uname = username.toLowerCase();
 
-      // --- Spiele der letzten X Tage ---
       let games = [];
       let wins = 0;
       let losses = 0;
       let draws = 0;
 
+      // --- Spiele der letzten X Tage laden ---
       try {
         const archivesData = await fetchJson(`https://api.chess.com/pub/player/${uname}/games/archives`);
         const archives = archivesData.archives || [];
-        const recentArchives = archives.slice(-3); // letzte 3 Monate um Monatswechsel abzudecken
+        const recentArchives = archives.slice(-3); // letzte 3 Monate für Sicherheits-Puffer
 
         const nowMs = Date.now();
         const thresholdMs = nowMs - DAYS * 24 * 60 * 60 * 1000;
@@ -203,7 +245,6 @@
                 const whiteResult = g.white && g.white.result;
                 const blackResult = g.black && g.black.result;
 
-                // Win/Loss/Draw für diesen Spieler bestimmen
                 const isWhite = whiteUser && whiteUser.toLowerCase() === uname;
                 const isBlack = blackUser && blackUser.toLowerCase() === uname;
 
@@ -284,27 +325,23 @@
 
     function renderWLBar(parent, wins, losses, draws) {
       const total = wins + losses + draws;
+      const wrapper = document.createElement("div");
+      wrapper.className = "wl-wrapper";
+
       if (!total) {
-        const noData = document.createElement("div");
-        noData.className = "wl-wrapper";
-        noData.textContent = "Keine Partien im Zeitraum – keine Winrate.";
-        parent.appendChild(noData);
+        wrapper.textContent = "Keine Partien im Zeitraum – keine Winrate.";
+        parent.appendChild(wrapper);
         return;
       }
 
       const winPct = Math.round((wins / total) * 100);
       const lossPct = Math.round((losses / total) * 100);
-      // Rest geht in Draws, damit wir immer 100% haben
       const drawPct = 100 - winPct - lossPct;
-
-      const wrapper = document.createElement("div");
-      wrapper.className = "wl-wrapper";
 
       const text = document.createElement("div");
       text.className = "wl-text";
       text.textContent =
-        `Wins: ${wins} · Losses: ${losses} · Draws: ${draws} ` +
-        `· Winrate: ${winPct}%`;
+        `Wins: ${wins} · Losses: ${losses} · Draws: ${draws} · Winrate: ${winPct}%`;
 
       const bar = document.createElement("div");
       bar.className = "wl-bar";
@@ -328,6 +365,131 @@
       wrapper.appendChild(text);
       wrapper.appendChild(bar);
       parent.appendChild(wrapper);
+    }
+
+    // --- Achievement-Logik ---
+    function buildAchievements(player) {
+      const { games, wins, losses, draws, tacticsCurrent } = player;
+      const total = wins + losses + draws;
+      const winRate = total ? Math.round((wins / total) * 100) : 0;
+
+      const achievements = [];
+
+      // AFK / Grinder
+      if (total === 0) {
+        achievements.push({
+          label: "😴 AFK",
+          desc: "Keine Partien in diesem Zeitraum. Höchste Zeit, wieder zu spielen!",
+          style: "fail"
+        });
+      } else {
+        if (total >= 15) {
+          achievements.push({
+            label: "🏃 Ultra Grinder",
+            desc: `${total} Partien in ${DAYS} Tagen – jemand ist süchtig.`,
+            style: "gold"
+          });
+        } else if (total >= 8) {
+          achievements.push({
+            label: "🏃 Grinder",
+            desc: `${total} Partien in ${DAYS} Tagen.`,
+            style: "silver"
+          });
+        } else if (total >= 3) {
+          achievements.push({
+            label: "🎯 Warmgelaufen",
+            desc: `${total} Partien in ${DAYS} Tagen.`,
+            style: "bronze"
+          });
+        }
+      }
+
+      // Winrate
+      if (total >= 3) {
+        if (winRate >= 70) {
+          achievements.push({
+            label: "🔥 On Fire",
+            desc: `Winrate ${winRate}% in diesem Zeitraum.`,
+            style: "gold"
+          });
+        } else if (winRate >= 55) {
+          achievements.push({
+            label: "💪 Climber",
+            desc: `Winrate ${winRate}% – Elo-Klettertour.`,
+            style: "silver"
+          });
+        } else if (winRate <= 35) {
+          achievements.push({
+            label: "🩹 Tilt Alert",
+            desc: `Winrate nur ${winRate}%. Vielleicht mal Pause machen.`,
+            style: "fail"
+          });
+        }
+      }
+
+      // Draws
+      if (draws >= 3) {
+        achievements.push({
+          label: "🧱 Solid Wall",
+          desc: `${draws} Remis – schwer zu knacken.`,
+          style: "bronze"
+        });
+      }
+
+      // Tactics
+      if (tacticsCurrent != null) {
+        if (tacticsCurrent >= 2200) {
+          achievements.push({
+            label: "🧠 Tactics Monster",
+            desc: `Taktikwertung ${tacticsCurrent}. Respekt.`,
+            style: "gold"
+          });
+        } else if (tacticsCurrent >= 1800) {
+          achievements.push({
+            label: "🧠 Tactics Pro",
+            desc: `Taktikwertung ${tacticsCurrent}. Sehr solide.`,
+            style: "silver"
+          });
+        } else if (tacticsCurrent >= 1400) {
+          achievements.push({
+            label: "🧩 Student",
+            desc: `Taktikwertung ${tacticsCurrent}. Weiter üben!`,
+            style: "bronze"
+          });
+        }
+      }
+
+      return achievements;
+    }
+
+    function renderAchievements(parent, player) {
+      const achievements = buildAchievements(player);
+
+      const title = document.createElement("div");
+      title.className = "section-title";
+      title.textContent = "🏅 Achievements";
+      parent.appendChild(title);
+
+      const container = document.createElement("div");
+      container.className = "achievements";
+
+      if (achievements.length === 0) {
+        const empty = document.createElement("div");
+        empty.textContent = "Noch keine besonderen Achievements in diesem Zeitraum.";
+        empty.style.fontSize = "0.75rem";
+        empty.style.color = "#9ca3af";
+        container.appendChild(empty);
+      } else {
+        achievements.forEach(a => {
+          const span = document.createElement("span");
+          span.className = `ach-badge ${a.style}`;
+          span.textContent = a.label;
+          span.title = a.desc;
+          container.appendChild(span);
+        });
+      }
+
+      parent.appendChild(container);
     }
 
     function renderCard(player) {
@@ -407,6 +569,9 @@
       }
 
       card.appendChild(tDiv);
+
+      // Achievements
+      renderAchievements(card, player);
 
       cards.appendChild(card);
     }

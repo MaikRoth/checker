@@ -91,20 +91,13 @@
       color: #d1d5db;
     }
 
-    .games-list {
-      margin: 0.4rem 0 0;
-      padding-left: 1rem;
+    .stats-row {
+      margin-top: 0.4rem;
       font-size: 0.82rem;
-      color: #9ca3af;
-    }
-
-    .games-list li {
-      margin-bottom: 0.3rem;
-    }
-
-    .tactics {
-      font-size: 0.88rem;
-      margin-top: 0.3rem;
+      color: #d1d5db;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
     }
 
     .highlight {
@@ -114,7 +107,7 @@
 
     /* Win/Loss Bar */
     .wl-wrapper {
-      margin-top: 0.5rem;
+      margin-top: 0.6rem;
       font-size: 0.8rem;
     }
 
@@ -150,7 +143,7 @@
 
     /* Achievements */
     .achievements {
-      margin-top: 0.35rem;
+      margin-top: 0.5rem;
       display: flex;
       flex-wrap: wrap;
       gap: 0.3rem;
@@ -188,48 +181,6 @@
     .ach-badge.fail {
       border-color: #ef4444;
       color: #fecaca;
-    }
-
-    /* Quests */
-    .quests {
-      margin-top: 0.4rem;
-      font-size: 0.78rem;
-      color: #d1d5db;
-    }
-
-    .quest-item {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      margin-bottom: 0.2rem;
-    }
-
-    .quest-label {
-      flex: 1;
-    }
-
-    .quest-progress {
-      font-size: 0.7rem;
-      color: #9ca3af;
-    }
-
-    .quest-status {
-      font-size: 0.9rem;
-    }
-
-    /* Time controls */
-    .tc-line {
-      font-size: 0.8rem;
-      color: #9ca3af;
-      margin-top: 0.2rem;
-    }
-
-    /* Trash-talk */
-    .trash-talk {
-      margin-top: 0.5rem;
-      font-size: 0.8rem;
-      color: #e5e7eb;
-      font-style: italic;
     }
 
     /* Summary / leaderboards */
@@ -327,7 +278,7 @@
       let wins = 0;
       let losses = 0;
       let draws = 0;
-      const timeControls = {}; // { blitz: n, rapid: m, ... }
+      const timeControls = {};
 
       // --- Spiele der letzten X Tage ---
       try {
@@ -416,12 +367,13 @@
 
       // --- Streak-Berechnung (innerhalb der letzten DAYS) ---
       const dayActive = new Array(DAYS).fill(false);
+      const nowMs2 = Date.now();
       for (const g of games) {
-        const diff = nowMs - g.endMs;
+        const diff = nowMs2 - g.endMs;
         if (diff < 0) continue;
         const idx = Math.floor(diff / MS_PER_DAY);
         if (idx >= 0 && idx < DAYS) {
-          dayActive[idx] = true; // idx = 0 -> heute, 1 -> gestern, ...
+          dayActive[idx] = true;
         }
       }
 
@@ -533,31 +485,7 @@
       parent.appendChild(wrapper);
     }
 
-    function renderTimeControls(parent, player) {
-      const title = document.createElement("div");
-      title.className = "section-title";
-      title.textContent = "⏱ Time Controls";
-      parent.appendChild(title);
-
-      const total = Object.values(player.timeControls).reduce((a, b) => a + b, 0);
-      const line = document.createElement("div");
-      line.className = "tc-line";
-
-      if (!total) {
-        line.textContent = "Keine Partien – keine Verteilung.";
-      } else {
-        const parts = [];
-        for (const [tc, count] of Object.entries(player.timeControls)) {
-          const pct = Math.round((count / total) * 100);
-          parts.push(`${tc}: ${pct}%`);
-        }
-        line.textContent = parts.join(" · ");
-      }
-
-      parent.appendChild(line);
-    }
-
-    // --- Achievements ---
+    // --- Achievements (gleich wie vorher, aber wir zeigen nur eine Handvoll) ---
     function buildAchievements(player) {
       const {
         totalGames,
@@ -572,7 +500,6 @@
 
       const achievements = [];
 
-      // AFK / Grinder
       if (totalGames === 0) {
         achievements.push({
           label: "😴 AFK",
@@ -583,7 +510,7 @@
         if (totalGames >= 20) {
           achievements.push({
             label: "🏃 Ultra Grinder",
-            desc: `${totalGames} Partien in ${DAYS} Tagen – jemand ist süchtig.`,
+            desc: `${totalGames} Partien in ${DAYS} Tagen.`,
             style: "gold"
           });
         } else if (totalGames >= 10) {
@@ -601,7 +528,6 @@
         }
       }
 
-      // Winrate
       if (totalGames >= 3) {
         if (winRate >= 70) {
           achievements.push({
@@ -618,13 +544,12 @@
         } else if (winRate <= 35) {
           achievements.push({
             label: "🩹 Tilt Alert",
-            desc: `Winrate nur ${winRate}%. Vielleicht mal kurz Pause machen.`,
+            desc: `Winrate nur ${winRate}%.`,
             style: "fail"
           });
         }
       }
 
-      // Draws
       if (draws >= 3) {
         achievements.push({
           label: "🧱 Solid Wall",
@@ -633,11 +558,10 @@
         });
       }
 
-      // Streak
       if (streakCurrent >= 3) {
         achievements.push({
           label: "📆 Streaker",
-          desc: `Aktuelle Aktivitäts-Streak: ${streakCurrent} Tage.`,
+          desc: `Aktuelle Streak: ${streakCurrent} Tage.`,
           style: "silver"
         });
       } else if (streakLongest >= 4) {
@@ -648,24 +572,23 @@
         });
       }
 
-      // Tactics
       if (tacticsCurrent != null) {
         if (tacticsCurrent >= 2200) {
           achievements.push({
             label: "🧠 Tactics Monster",
-            desc: `Taktikwertung ${tacticsCurrent}. Respekt.`,
+            desc: `Taktikwertung ${tacticsCurrent}.`,
             style: "gold"
           });
         } else if (tacticsCurrent >= 1800) {
           achievements.push({
             label: "🧠 Tactics Pro",
-            desc: `Taktikwertung ${tacticsCurrent}. Sehr solide.`,
+            desc: `Taktikwertung ${tacticsCurrent}.`,
             style: "silver"
           });
         } else if (tacticsCurrent >= 1400) {
           achievements.push({
             label: "🧩 Student",
-            desc: `Taktikwertung ${tacticsCurrent}. Weiter üben!`,
+            desc: `Taktikwertung ${tacticsCurrent}.`,
             style: "bronze"
           });
         }
@@ -675,6 +598,8 @@
     }
 
     function renderAchievements(parent, player) {
+      const achievements = buildAchievements(player);
+
       const title = document.createElement("div");
       title.className = "section-title";
       title.textContent = "🏅 Achievements";
@@ -683,16 +608,15 @@
       const container = document.createElement("div");
       container.className = "achievements";
 
-      const achievements = buildAchievements(player);
-
       if (achievements.length === 0) {
         const empty = document.createElement("div");
-        empty.textContent = "Noch keine besonderen Achievements in diesem Zeitraum.";
+        empty.textContent = "Keine besonderen Achievements in diesem Zeitraum.";
         empty.style.fontSize = "0.75rem";
         empty.style.color = "#9ca3af";
         container.appendChild(empty);
       } else {
-        achievements.forEach(a => {
+        // Nur die wichtigsten / ersten 3 anzeigen
+        achievements.slice(0, 3).forEach(a => {
           const span = document.createElement("span");
           span.className = `ach-badge ${a.style}`;
           span.textContent = a.label;
@@ -702,103 +626,6 @@
       }
 
       parent.appendChild(container);
-    }
-
-    // --- Quests ---
-    function buildQuests(player) {
-      const { totalGames, wins, winRate, tacticsCurrent } = player;
-      const quests = [];
-
-      // Quest 1: X games
-      const targetGames = 10;
-      quests.push({
-        label: `Spiele ${targetGames} Partien in ${DAYS} Tagen`,
-        progress: `${Math.min(totalGames, targetGames)}/${targetGames}`,
-        done: totalGames >= targetGames
-      });
-
-      // Quest 2: Winrate
-      const targetWR = 55;
-      quests.push({
-        label: `Erreiche mindestens ${targetWR}% Winrate`,
-        progress: `${winRate}%`,
-        done: winRate >= targetWR && totalGames >= 3
-      });
-
-      // Quest 3: Tactics rating exists
-      quests.push({
-        label: `Hab eine Taktikwertung (mach Puzzles)`,
-        progress: tacticsCurrent != null ? `Rating: ${tacticsCurrent}` : "Keine Wertung",
-        done: tacticsCurrent != null
-      });
-
-      return quests;
-    }
-
-    function renderQuests(parent, player) {
-      const title = document.createElement("div");
-      title.className = "section-title";
-      title.textContent = "🎯 Weekly Quests";
-      parent.appendChild(title);
-
-      const container = document.createElement("div");
-      container.className = "quests";
-
-      const quests = buildQuests(player);
-      quests.forEach(q => {
-        const row = document.createElement("div");
-        row.className = "quest-item";
-
-        const label = document.createElement("div");
-        label.className = "quest-label";
-        label.textContent = q.label;
-
-        const progress = document.createElement("div");
-        progress.className = "quest-progress";
-        progress.textContent = q.progress;
-
-        const status = document.createElement("div");
-        status.className = "quest-status";
-        status.textContent = q.done ? "✅" : "⚪";
-
-        row.appendChild(status);
-        row.appendChild(label);
-        row.appendChild(progress);
-        container.appendChild(row);
-      });
-
-      parent.appendChild(container);
-    }
-
-    // --- Trash talk / Motivation ---
-    function buildTrashTalk(player) {
-      const { totalGames, winRate, momentumScore, streakCurrent } = player;
-
-      if (totalGames === 0) {
-        return "Deine Figuren sind am Staub ansetzen. Eine Partie heute würde ihnen gut tun. 😴";
-      }
-
-      if (winRate >= 70 && totalGames >= 5) {
-        return "Du bist im Smurfing-Modus. Vielleicht mal eine Herausforderung suchen? 😏";
-      }
-
-      if (winRate <= 35 && totalGames >= 5) {
-        return "Okay, der Tilt ist real. Kurze Pause, ein paar Taktiken – und dann comeback time. 🧊";
-      }
-
-      if (momentumScore >= 3) {
-        return "Du surfst gerade auf einer Siegesserie – weiter so, bevor die Welle bricht! 🌊";
-      }
-
-      if (momentumScore <= -3) {
-        return "Die letzten Spiele waren hart. Analyse > Ragequit. Danach neue Runde. 🔍";
-      }
-
-      if (streakCurrent >= 3) {
-        return "Starke Streak! Jeden Tag ein bisschen Schach hält den Elo-Rost fern. 🔥";
-      }
-
-      return "Solide Aktivität. Ein paar Spiele mehr und du bist offiziell im Grind-Modus. 💪";
     }
 
     function renderCard(player) {
@@ -823,69 +650,28 @@
       header.appendChild(badge);
       card.appendChild(header);
 
-      // Streak info
-      const streakInfo = document.createElement("div");
-      streakInfo.style.fontSize = "0.8rem";
-      streakInfo.style.color = "#9ca3af";
-      streakInfo.textContent =
-        `Streak aktuell: ${player.streakCurrent} Tag(e) · Beste Streak (Zeitraum): ${player.streakLongest} Tag(e)`;
-      card.appendChild(streakInfo);
+      // Kompakte Stats
+      const stats = document.createElement("div");
+      stats.className = "stats-row";
 
-      // Spiele
-      const gTitle = document.createElement("div");
-      gTitle.className = "section-title";
-      gTitle.textContent = "🕒 Partien (letzte " + DAYS + " Tage)";
-      card.appendChild(gTitle);
-
-      if (!active) {
-        const noGames = document.createElement("div");
-        noGames.style.fontSize = "0.85rem";
-        noGames.style.color = "#f87171";
-        noGames.textContent =
-          "Keine beendeten Partien. Zeit, wieder zu spielen, bevor der Skill rostet! 🔥";
-        card.appendChild(noGames);
-      } else {
-        const ul = document.createElement("ul");
-        ul.className = "games-list";
-
-        player.games.slice(0, 5).forEach(g => {
-          const li = document.createElement("li");
-          const date = new Date(g.endMs);
-          const rated = g.rated ? "Rated" : "Unrated";
-          li.innerHTML =
-            `<span>${date.toLocaleString()} – ${g.time_class}, ${rated}</span><br>` +
-            `<span>${g.white} vs ${g.black}</span>`;
-          ul.appendChild(li);
-        });
-
-        card.appendChild(ul);
-      }
+      stats.innerHTML = `
+        <div>Partien (letzte ${DAYS} Tage): <span class="highlight">${player.totalGames}</span></div>
+        <div>Winrate: <span class="highlight">${player.winRate}%</span> · Streak: ${player.streakCurrent} Tag(e)</div>
+        <div>Momentum: ${player.momentumEmoji} ${player.momentumLabel}</div>
+      `;
+      card.appendChild(stats);
 
       // Win/Loss/Draw Grafik
       renderWLBar(card, player);
 
-      // Momentum
-      const momentumLine = document.createElement("div");
-      momentumLine.style.marginTop = "0.3rem";
-      momentumLine.style.fontSize = "0.8rem";
-      momentumLine.style.color = "#d1d5db";
-      const recentCount = Math.min(10, player.games.length);
-      momentumLine.textContent =
-        `Momentum (letzte ${recentCount || 0} Spiele): ${player.momentumEmoji} ${player.momentumLabel} (Score ${player.momentumScore >= 0 ? "+" : ""}${player.momentumScore})`;
-      card.appendChild(momentumLine);
-
-      // Time controls
-      renderTimeControls(card, player);
-
-      // Taktiken
+      // Taktik kompakt
       const tTitle = document.createElement("div");
       tTitle.className = "section-title";
       tTitle.textContent = "🧠 Taktikwertung";
       card.appendChild(tTitle);
 
       const tDiv = document.createElement("div");
-      tDiv.className = "tactics";
-
+      tDiv.style.fontSize = "0.85rem";
       if (
         player.tacticsCurrent == null &&
         player.tacticsHigh == null &&
@@ -894,27 +680,17 @@
         tDiv.textContent = "Keine Taktikdaten im API verfügbar.";
       } else {
         tDiv.innerHTML =
-          `Aktuell: <span class="highlight">${player.tacticsCurrent ?? "–"}</span><br>` +
-          `Highest: ${player.tacticsHigh ?? "–"} · Lowest: ${player.tacticsLow ?? "–"}`;
+          `Aktuell: <span class="highlight">${player.tacticsCurrent ?? "–"}</span>`;
       }
       card.appendChild(tDiv);
 
-      // Achievements
+      // Achievements (kompakt, max. 3)
       renderAchievements(card, player);
-
-      // Quests
-      renderQuests(card, player);
-
-      // Trash talk
-      const tt = document.createElement("div");
-      tt.className = "trash-talk";
-      tt.textContent = buildTrashTalk(player);
-      card.appendChild(tt);
 
       cards.appendChild(card);
     }
 
-    // --- Summary / Leaderboards / Duels ---
+    // --- Summary / Leaderboards / Duels (wie vorher) ---
     function renderSummary(players) {
       const summary = document.getElementById("summary");
       summary.innerHTML = "";
@@ -1024,17 +800,14 @@
           let scoreA = 0;
           let scoreB = 0;
 
-          // mehr Partien
           if (a.totalGames > b.totalGames) scoreA++;
           else if (b.totalGames > a.totalGames) scoreB++;
 
-          // bessere Winrate (min 3 Games)
           if (a.totalGames >= 3 && b.totalGames >= 3) {
             if (a.winRate > b.winRate) scoreA++;
             else if (b.winRate > a.winRate) scoreB++;
           }
 
-          // bessere Taktikwertung
           if (a.tacticsCurrent != null && b.tacticsCurrent != null) {
             if (a.tacticsCurrent > b.tacticsCurrent) scoreA++;
             else if (b.tacticsCurrent > a.tacticsCurrent) scoreB++;
@@ -1065,10 +838,7 @@
 
       const players = await Promise.all(PLAYERS.map(loadPlayer));
 
-      // Player cards
       players.forEach(p => renderCard(p));
-
-      // Summary / leaderboards / duels
       renderSummary(players);
 
       const now = new Date();

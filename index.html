@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chess Activity – err_daemon, m41k, Kathi_2905</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #050816;
+      color: #e5e7eb;
+    }
+
+    body {
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 2rem;
+      text-align: center;
+    }
+
+    .subtitle {
+      color: #9ca3af;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      width: 100%;
+      max-width: 960px;
+    }
+
+    .card {
+      background: radial-gradient(circle at top, #111827, #020617);
+      border-radius: 1rem;
+      padding: 1.2rem 1.4rem;
+      border: 1px solid #1f2937;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.6);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .username {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .badge {
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge.active {
+      background: #065f46;
+      color: #bbf7d0;
+    }
+
+    .badge.inactive {
+      background: #7f1d1d;
+      color: #fecaca;
+    }
+
+    .section-title {
+      margin-top: 0.8rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #d1d5db;
+    }
+
+    .games-list {
+      margin: 0.4rem 0 0;
+      padding-left: 1rem;
+      font-size: 0.82rem;
+      color: #9ca3af;
+    }
+
+    .games-list li {
+      margin-bottom: 0.3rem;
+    }
+
+    .tactics {
+      font-size: 0.88rem;
+      margin-top: 0.3rem;
+    }
+
+    .highlight {
+      color: #facc15;
+      font-weight: 600;
+    }
+
+    footer {
+      font-size: 0.8rem;
+      color: #6b7280;
+      text-align: center;
+    }
+
+    a {
+      color: #60a5fa;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>♟️ Chess Activity Dashboard</h1>
+    <p class="subtitle" id="subtitle">Lade Daten…</p>
+
+    <div class="grid" id="cards"></div>
+  </main>
+
+  <footer id="footer"></footer>
+
+  <script>
+    async function loadStats() {
+      try {
+        const res = await fetch("data/stats.json?_=" + Date.now());
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+
+        const subtitle = document.getElementById("subtitle");
+        subtitle.textContent = `Fenster: letzte ${data.days} Tage · Letztes Update (UTC): ${new Date(data.last_update_utc).toLocaleString()}`;
+
+        const cards = document.getElementById("cards");
+        cards.innerHTML = "";
+
+        const players = data.players || [];
+
+        // Wer hat die höchste Taktikwertung?
+        let best = null;
+        for (const p of players) {
+          if (p.tactics_current != null) {
+            if (!best || p.tactics_current > best.tactics_current) {
+              best = p;
+            }
+          }
+        }
+
+        players.forEach(p => {
+          const card = document.createElement("div");
+          card.className = "card";
+
+          const header = document.createElement("div");
+          header.className = "card-header";
+
+          const name = document.createElement("div");
+          name.className = "username";
+          name.textContent = p.username;
+
+          const badge = document.createElement("div");
+          badge.className = "badge " + (p.active_last_days ? "active" : "inactive");
+          badge.textContent = p.active_last_days ? "AKTIV" : "INAKTIV";
+
+          header.appendChild(name);
+          header.appendChild(badge);
+          card.appendChild(header);
+
+          // Games
+          const gTitle = document.createElement("div");
+          gTitle.className = "section-title";
+          gTitle.textContent = "🕒 Partien (letzte " + p.days_window + " Tage)";
+          card.appendChild(gTitle);
+
+          if (!p.games_recent || p.games_recent.length === 0) {
+            const noGames = document.createElement("div");
+            noGames.style.fontSize = "0.85rem";
+            noGames.style.color = "#f87171";
+            noGames.textContent = "Keine beendeten Partien. Zeit, wieder zu spielen, bevor der Skill rostet! 🔥";
+            card.appendChild(noGames);
+          } else {
+            const ul = document.createElement("ul");
+            ul.className = "games-list";
+
+            p.games_recent.forEach(g => {
+              const li = document.createElement("li");
+              const date = new Date(g.end_time);
+              const rated = g.rated ? "Rated" : "Unrated";
+              li.innerHTML =
+                `<span>${date.toLocaleString()} – ${g.time_class}, ${rated}</span><br>` +
+                `<span>${g.white} vs ${g.black}</span>`;
+              ul.appendChild(li);
+            });
+
+            card.appendChild(ul);
+          }
+
+          // Tactics
+          const tTitle = document.createElement("div");
+          tTitle.className = "section-title";
+          tTitle.textContent = "🧠 Taktikwertung";
+          card.appendChild(tTitle);
+
+          const tDiv = document.createElement("div");
+          tDiv.className = "tactics";
+
+          if (p.tactics_current == null && p.tactics_highest == null && p.tactics_lowest == null) {
+            tDiv.textContent = "Keine Taktikdaten im API verfügbar.";
+          } else {
+            tDiv.innerHTML =
+              `Aktuell: <span class="highlight">${p.tactics_current ?? "–"}</span><br>` +
+              `Highest: ${p.tactics_highest ?? "–"} · Lowest: ${p.tactics_lowest ?? "–"}`;
+          }
+
+          card.appendChild(tDiv);
+
+          // Krone anzeigen, wenn bester Taktiker
+          if (best && best.username === p.username && p.tactics_current != null) {
+            const crown = document.createElement("div");
+            crown.style.marginTop = "0.5rem";
+            crown.style.fontSize = "0.85rem";
+            crown.innerHTML = "👑 Bester Taktiker in dieser Runde";
+            card.appendChild(crown);
+          }
+
+          cards.appendChild(card);
+        });
+
+        const footer = document.getElementById("footer");
+        footer.innerHTML = `Datenquelle: <a href="https://www.chess.com/news/view/published-data-api" target="_blank" rel="noreferrer">Chess.com Published Data API</a>`;
+      } catch (err) {
+        document.getElementById("subtitle").textContent = "Fehler beim Laden der Daten 😢";
+        console.error(err);
+      }
+    }
+
+    loadStats();
+  </script>
+</body>
+</html>

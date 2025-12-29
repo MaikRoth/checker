@@ -282,18 +282,60 @@
       filter: brightness(1.1);
     }
 
-    .btn-secondary {
-      border-color: #3b82f6;
-      background: #0b2239;
-      color: #bfdbfe;
-      margin-left: 0.3rem;
-    }
-
     .btn-danger {
       border-color: #ef4444;
       background: #450a0a;
       color: #fecaca;
       margin-left: 0.3rem;
+    }
+
+    .weekly-goals {
+      margin-top: 0.4rem;
+      font-size: 0.78rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .weekly-goal-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.4rem;
+      padding: 0.2rem 0.3rem;
+      border-radius: 0.5rem;
+      background: rgba(15,23,42,0.6);
+    }
+
+    .weekly-goal-label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+    }
+
+    .weekly-goal-name {
+      font-weight: 500;
+    }
+
+    .weekly-goal-meta {
+      font-size: 0.72rem;
+      color: #9ca3af;
+    }
+
+    .weekly-goal-status {
+      font-size: 0.75rem;
+      text-align: right;
+    }
+
+    .status-ok {
+      color: #bbf7d0;
+    }
+
+    .status-paid {
+      color: #93c5fd;
+    }
+
+    .status-missing {
+      color: #facc15;
     }
 
     .squad-card {
@@ -360,15 +402,15 @@
       serverTimestamp
     } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
-    // TODO: Hier deine Firebase-Konfiguration aus der Firebase Console einfügen
+    // Deine Firebase Config
     const firebaseConfig = {
-  apiKey: "AIzaSyBtEkLjoW0pEqxOodau5dAArMkkf1hgjnc",
-  authDomain: "chess-rewards.firebaseapp.com",
-  projectId: "chess-rewards",
-  storageBucket: "chess-rewards.firebasestorage.app",
-  messagingSenderId: "118996095284",
-  appId: "1:118996095284:web:0a80d27fe93668563cd561"
-};
+      apiKey: "AIzaSyBtEkLjoW0pEqxOodau5dAArMkkf1hgjnc",
+      authDomain: "chess-rewards.firebaseapp.com",
+      projectId: "chess-rewards",
+      storageBucket: "chess-rewards.firebasestorage.app",
+      messagingSenderId: "118996095284",
+      appId: "1:118996095284:web:0a80d27fe93668563cd561"
+    };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
@@ -392,6 +434,43 @@
     ];
 
     const REWARD_COLLECTION = "rewardProgress";
+
+    // Weekly Activity
+    const WEEKLY_COLLECTION = "weeklyActivity";
+    const WEEKLY_CAP = 10;
+
+    const WEEKLY_GOALS = [
+      {
+        id: "rapid10",
+        label: "10 Rapid-Partien in dieser Woche",
+        amount: 3,
+        description: "Mindestens 10 Rapid-Games (time_class = rapid) zwischen Montag und Sonntag.",
+      },
+      {
+        id: "games20",
+        label: "20 Partien insgesamt",
+        amount: 3,
+        description: "Mindestens 20 Games (egal welches Format) in dieser Woche.",
+      },
+      {
+        id: "days5",
+        label: "An 5 Tagen gespielt",
+        amount: 3,
+        description: "An mindestens 5 verschiedenen Tagen in dieser Woche mindestens eine Partie.",
+      },
+      {
+        id: "days7",
+        label: "An 7 Tagen gespielt",
+        amount: 5,
+        description: "Jeden Tag dieser Woche mindestens eine Partie.",
+      },
+      {
+        id: "noTimeouts",
+        label: "Kein Timeout",
+        amount: 2,
+        description: "Du hast diese Woche keine Partie durch Timeout verloren.",
+      }
+    ];
 
     async function fetchJson(url) {
       const res = await fetch(url);
@@ -478,14 +557,13 @@
       };
     }
 
-    // === Firestore Reward-Dokument ===
+    // === Firestore Reward-Dokument (Lebenszeit) ===
     async function loadRewardDoc(username, tacticsRating, rapidRating) {
       const id = username.toLowerCase();
       const ref = doc(db, REWARD_COLLECTION, id);
       const snap = await getDoc(ref);
 
       if (!snap.exists()) {
-        // Baseline = aktuelles Rating zum ersten Zeitpunkt
         const baselineTactics = tacticsRating ?? 0;
         const baselineRapid   = rapidRating ?? 0;
         const initData = {
@@ -505,7 +583,7 @@
       return snap.data();
     }
 
-    // === Rewards berechnen ===
+    // === Lebenszeit-Rewards berechnen ===
     function computeRewardState(username, tacticsRating, rapidRating, rewardDoc) {
       const isChef = username === CHEF_USERNAME;
 
@@ -544,7 +622,6 @@
       const reachedMilestones = RAPID_MILESTONES.filter(m =>
         m.rating > baselineR && m.rating <= rNow
       );
-      const reachedRatings = reachedMilestones.map(m => m.rating);
       const newMilestones = reachedMilestones.filter(m => !claimedMilestones.includes(m.rating));
       const milestoneRewardRaw = reachedMilestones.reduce((sum, m) => sum + m.reward, 0);
       const milestonePaid = reachedMilestones
@@ -609,8 +686,7 @@
       };
     }
 
-    // Claim anlegen (Status: requested)
-    async function createClaim(username, rewardState) {
+    async function createLifetimeClaim(username, rewardState) {
       const id = username.toLowerCase();
       const ref = doc(db, REWARD_COLLECTION, id);
 
@@ -632,8 +708,7 @@
       });
     }
 
-    // Claim als bezahlt markieren (Schritte & Milestones werden "verbraucht")
-    async function markClaimPaid(username, rewardState) {
+    async function markLifetimeClaimPaid(username, rewardState) {
       const id = username.toLowerCase();
       const ref = doc(db, REWARD_COLLECTION, id);
       const pending = rewardState.pending;
@@ -672,7 +747,7 @@
       });
     }
 
-    async function resetPendingClaim(username) {
+    async function resetLifetimeClaim(username) {
       const id = username.toLowerCase();
       const ref = doc(db, REWARD_COLLECTION, id);
       await updateDoc(ref, {
@@ -681,7 +756,264 @@
       });
     }
 
-    // === Achievements & Fokus (einfach) ===
+    // === Weekly Activity: Zeitbereich der aktuellen Woche (Mo–So) ===
+    function getCurrentWeekRange() {
+      const now = new Date();
+      const day = now.getDay(); // 0=So,1=Mo,...6=Sa
+      const diffToMonday = (day === 0 ? -6 : 1 - day); // Montag als Start
+      const monday = new Date(now);
+      monday.setHours(0,0,0,0);
+      monday.setDate(monday.getDate() + diffToMonday);
+
+      const sunday = new Date(monday);
+      sunday.setDate(sunday.getDate() + 6);
+      sunday.setHours(23,59,59,999);
+
+      const weekStartMs = monday.getTime();
+      const weekEndMs = sunday.getTime();
+
+      // Woche als Schlüssel: YYYY-Www
+      const year = monday.getFullYear();
+      const weekNumber = getISOWeekNumber(monday);
+      const weekKey = `${year}-W${String(weekNumber).padStart(2, "0")}`;
+
+      return { weekStartMs, weekEndMs, weekKey };
+    }
+
+    function getISOWeekNumber(date) {
+      const tmp = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      const dayNum = tmp.getUTCDay() || 7;
+      tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
+      const weekNo = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
+      return weekNo;
+    }
+
+    // === Weekly Activity: Chess.com Games dieser Woche laden ===
+    async function loadWeeklyStats(username) {
+      const uname = username.toLowerCase();
+      const { weekStartMs, weekEndMs } = getCurrentWeekRange();
+
+      const startDate = new Date(weekStartMs);
+      const endDate = new Date(weekEndMs);
+
+      const months = getMonthsBetween(startDate, endDate);
+      let totalGamesWeek = 0;
+      let rapidGamesWeek = 0;
+      let timeoutsWeek = 0;
+      const activeDayIndexes = new Set();
+
+      for (const { year, month } of months) {
+        const monthStr = String(month).padStart(2, "0");
+        try {
+          const data = await fetchJson(`https://api.chess.com/pub/player/${uname}/games/${year}/${monthStr}`);
+          const games = data.games || [];
+          for (const g of games) {
+            if (!g.end_time) continue;
+            const endMs = g.end_time * 1000;
+            if (endMs < weekStartMs || endMs > weekEndMs) continue;
+
+            totalGamesWeek++;
+
+            if (g.time_class === "rapid") {
+              rapidGamesWeek++;
+            }
+
+            // Timeout-Erkennung: wenn eigener result == "timeout" oder "abandoned"
+            const whiteUser = g.white && g.white.username && g.white.username.toLowerCase();
+            const blackUser = g.black && g.black.username && g.black.username.toLowerCase();
+            const unameLower = uname;
+
+            let myResult = null;
+            if (whiteUser === unameLower) myResult = g.white.result;
+            else if (blackUser === unameLower) myResult = g.black.result;
+
+            if (myResult === "timeout" || myResult === "abandoned") {
+              timeoutsWeek++;
+            }
+
+            const dayIndex = Math.floor((endMs - weekStartMs) / (24 * 60 * 60 * 1000));
+            if (dayIndex >= 0 && dayIndex < 7) activeDayIndexes.add(dayIndex);
+          }
+        } catch (e) {
+          console.error("Fehler beim Laden des Monatsarchivs", year, monthStr, "für", username, e);
+        }
+      }
+
+      const activeDaysCount = activeDayIndexes.size;
+
+      return {
+        totalGamesWeek,
+        rapidGamesWeek,
+        activeDaysCount,
+        timeoutsWeek
+      };
+    }
+
+    function getMonthsBetween(startDate, endDate) {
+      const months = [];
+      let year = startDate.getFullYear();
+      let month = startDate.getMonth() + 1; // 1-12
+
+      while (year < endDate.getFullYear() || (year === endDate.getFullYear() && month <= endDate.getMonth() + 1)) {
+        months.push({ year, month });
+        month++;
+        if (month > 12) {
+          month = 1;
+          year++;
+        }
+      }
+      return months;
+    }
+
+    // === Weekly Activity: Firestore-Dokument ===
+    async function loadWeeklyDoc(username, weekKey) {
+      const id = `${username.toLowerCase()}_${weekKey}`;
+      const ref = doc(db, WEEKLY_COLLECTION, id);
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) {
+        const initData = {
+          username,
+          weekKey,
+          goalsPaid: [],
+          totalPaid: 0,
+          pendingClaim: null,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        };
+        await setDoc(ref, initData);
+        return initData;
+      }
+
+      return snap.data();
+    }
+
+    // === Weekly Activity: State berechnen ===
+    function computeWeeklyState(username, weeklyStats, weeklyDoc, weekKey) {
+      const isChef = username === CHEF_USERNAME;
+      const goalsPaid = weeklyDoc.goalsPaid || [];
+      const totalPaid = weeklyDoc.totalPaid || 0;
+      const pending = weeklyDoc.pendingClaim || null;
+
+      const goalStates = WEEKLY_GOALS.map(goal => {
+        let fulfilled = false;
+
+        if (goal.id === "rapid10") {
+          fulfilled = weeklyStats.rapidGamesWeek >= 10;
+        } else if (goal.id === "games20") {
+          fulfilled = weeklyStats.totalGamesWeek >= 20;
+        } else if (goal.id === "days5") {
+          fulfilled = weeklyStats.activeDaysCount >= 5;
+        } else if (goal.id === "days7") {
+          fulfilled = weeklyStats.activeDaysCount >= 7;
+        } else if (goal.id === "noTimeouts") {
+          fulfilled = weeklyStats.totalGamesWeek > 0 && weeklyStats.timeoutsWeek === 0;
+        }
+
+        const alreadyPaid = goalsPaid.includes(goal.id);
+
+        return {
+          id: goal.id,
+          label: goal.label,
+          amount: goal.amount,
+          description: goal.description,
+          fulfilled,
+          alreadyPaid
+        };
+      });
+
+      const potentialGoals = goalStates.filter(g => g.fulfilled && !g.alreadyPaid);
+      let remainingCap = Math.max(0, WEEKLY_CAP - totalPaid);
+      let claimAmount = 0;
+      const claimGoalIds = [];
+
+      for (const g of potentialGoals) {
+        if (g.amount <= remainingCap) {
+          claimAmount += g.amount;
+          claimGoalIds.push(g.id);
+          remainingCap -= g.amount;
+        }
+      }
+
+      const unpaid = claimAmount;
+      const rawEarned = totalPaid + potentialGoals.reduce((s, g) => s + g.amount, 0);
+
+      return {
+        isChef,
+        weekKey,
+        weeklyStats,
+        goalStates,
+        totalPaid,
+        unpaid,
+        rawEarned,
+        pending,
+        claimPlan: {
+          amount: claimAmount,
+          goalIds: claimGoalIds
+        }
+      };
+    }
+
+    async function createWeeklyClaim(username, weeklyState) {
+      const { claimPlan, weekKey } = weeklyState;
+      if (claimPlan.amount <= 0) return;
+      const id = `${username.toLowerCase()}_${weekKey}`;
+      const ref = doc(db, WEEKLY_COLLECTION, id);
+
+      const pendingClaim = {
+        status: "requested",
+        amount: claimPlan.amount,
+        goals: claimPlan.goalIds,
+        createdAt: serverTimestamp()
+      };
+
+      await updateDoc(ref, {
+        pendingClaim,
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    async function markWeeklyClaimPaid(username, weeklyState) {
+      const { weekKey } = weeklyState;
+      const id = `${username.toLowerCase()}_${weekKey}`;
+      const ref = doc(db, WEEKLY_COLLECTION, id);
+      const pending = weeklyState.pending;
+      if (!pending || pending.status !== "requested") return;
+
+      const snap = await getDoc(ref);
+      if (!snap.exists()) return;
+      const data = snap.data();
+
+      const goalsPaid = data.goalsPaid || [];
+      const totalPaid = data.totalPaid || 0;
+
+      const newGoalsPaid = Array.from(new Set([...goalsPaid, ...(pending.goals || [])]));
+      const newTotalPaid = totalPaid + (pending.amount || 0);
+
+      await updateDoc(ref, {
+        goalsPaid: newGoalsPaid,
+        totalPaid: newTotalPaid,
+        pendingClaim: {
+          ...pending,
+          status: "paid",
+          resolvedAt: serverTimestamp()
+        },
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    async function resetWeeklyClaim(username, weeklyState) {
+      const { weekKey } = weeklyState;
+      const id = `${username.toLowerCase()}_${weekKey}`;
+      const ref = doc(db, WEEKLY_COLLECTION, id);
+      await updateDoc(ref, {
+        pendingClaim: null,
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    // === Achievements & Fokus (Lebenszeit) ===
     function buildAchievements(stats, rewardState) {
       const { totalGames, modes, tactics } = stats;
       const { total } = rewardState;
@@ -761,7 +1093,7 @@
     }
 
     // === Rendering ===
-    function renderPlayerCard(stats, rewardState) {
+    function renderPlayerCard(stats, rewardState, weeklyState) {
       const cards = document.getElementById("cards");
       const card = document.createElement("article");
       card.className = "card";
@@ -782,7 +1114,7 @@
 
       const nameEl = document.createElement("div");
       nameEl.className = "username";
-      nameEl.textContent = stats.username; // kein (Chef) mehr
+      nameEl.textContent = stats.username;
       left.appendChild(nameEl);
 
       header.appendChild(left);
@@ -794,7 +1126,7 @@
 
       card.appendChild(header);
 
-      // Ratings & PBs
+      // Ratings
       const modesTitle = document.createElement("div");
       modesTitle.className = "section-title";
       modesTitle.textContent = "Ratings & Bestleistungen";
@@ -906,11 +1238,11 @@
       focus.innerHTML = `<strong>${focusInfo.title}</strong><br>${focusInfo.text}`;
       card.appendChild(focus);
 
-      // Belohnungen & Progression – NICHT für M41K
+      // Lebenszeit-Belohnungen – NICHT für M41K
       if (!rewardState.isChef) {
         const rewardTitle = document.createElement("div");
         rewardTitle.className = "section-title";
-        rewardTitle.textContent = "Belohnungen & Progression";
+        rewardTitle.textContent = "Belohnungen & Progression (Lebenszeit)";
         card.appendChild(rewardTitle);
 
         const rewardBox = document.createElement("div");
@@ -937,7 +1269,6 @@
           </div>
         `;
 
-        // Status-Chip
         const chip = document.createElement("div");
         let chipClass, chipText;
         if (activePending) {
@@ -954,14 +1285,13 @@
         chip.textContent = chipText;
         rewardBox.appendChild(chip);
 
-        // Buttons – jeder darf klicken, Vertrauenbasis
         if (!activePending && total.unpaid > 0) {
           const btn = document.createElement("button");
           btn.className = "btn";
           btn.textContent = `Belohnung einfordern (${total.unpaid} €)`;
           btn.addEventListener("click", async () => {
             btn.disabled = true;
-            await createClaim(stats.username, rewardState);
+            await createLifetimeClaim(stats.username, rewardState);
             location.reload();
           });
           rewardBox.appendChild(btn);
@@ -971,7 +1301,7 @@
           btnPaid.textContent = `Ausgezahlt (${activePending.amount} €)`;
           btnPaid.addEventListener("click", async () => {
             btnPaid.disabled = true;
-            await markClaimPaid(stats.username, rewardState);
+            await markLifetimeClaimPaid(stats.username, rewardState);
             location.reload();
           });
           rewardBox.appendChild(btnPaid);
@@ -981,13 +1311,126 @@
           btnCancel.textContent = "Anfrage zurücksetzen";
           btnCancel.addEventListener("click", async () => {
             btnCancel.disabled = true;
-            await resetPendingClaim(stats.username);
+            await resetLifetimeClaim(stats.username);
             location.reload();
           });
           rewardBox.appendChild(btnCancel);
         }
 
         card.appendChild(rewardBox);
+      }
+
+      // Weekly Activity – auch NICHT für M41K
+      if (!weeklyState.isChef) {
+        const weeklyTitle = document.createElement("div");
+        weeklyTitle.className = "section-title";
+        weeklyTitle.textContent = "Wöchentlicher Aktivitätsbonus";
+        card.appendChild(weeklyTitle);
+
+        const weeklyBox = document.createElement("div");
+        weeklyBox.className = "focus";
+
+        const { weeklyStats, goalStates, unpaid, totalPaid, pending, claimPlan, weekKey } = weeklyState;
+        const activePending = pending && pending.status === "requested" ? pending : null;
+
+        weeklyBox.innerHTML = `
+          <div style="font-size:0.78rem;margin-bottom:0.3rem;">
+            Woche: <strong>${weekKey}</strong><br>
+            Diese Woche bisher: ${weeklyStats.totalGamesWeek} Partien (${weeklyStats.rapidGamesWeek} Rapid) · an ${weeklyStats.activeDaysCount}/7 Tagen aktiv · Timeouts: ${weeklyStats.timeoutsWeek}
+          </div>
+          <div class="reward-row">
+            <span class="reward-label">Bereits ausgezahlt (Woche):</span>
+            <span class="reward-value">${totalPaid} €</span>
+            <span class="reward-label">Noch möglich (Cap ${WEEKLY_CAP} €):</span>
+            <span class="reward-value">${unpaid} €</span>
+          </div>
+        `;
+
+        const goalsDiv = document.createElement("div");
+        goalsDiv.className = "weekly-goals";
+
+        goalStates.forEach(g => {
+          const row = document.createElement("div");
+          row.className = "weekly-goal-row";
+
+          const leftCol = document.createElement("div");
+          leftCol.className = "weekly-goal-label";
+          const name = document.createElement("div");
+          name.className = "weekly-goal-name";
+          name.textContent = `${g.label} (${g.amount} €)`;
+          const meta = document.createElement("div");
+          meta.className = "weekly-goal-meta";
+          meta.textContent = g.description;
+          leftCol.appendChild(name);
+          leftCol.appendChild(meta);
+
+          const rightCol = document.createElement("div");
+          rightCol.className = "weekly-goal-status";
+
+          if (g.alreadyPaid) {
+            rightCol.innerHTML = `<span class="status-paid">✔ bereits bezahlt</span>`;
+          } else if (g.fulfilled) {
+            rightCol.innerHTML = `<span class="status-ok">✔ erreicht</span>`;
+          } else {
+            rightCol.innerHTML = `<span class="status-missing">noch nicht erfüllt</span>`;
+          }
+
+          row.appendChild(leftCol);
+          row.appendChild(rightCol);
+          goalsDiv.appendChild(row);
+        });
+
+        weeklyBox.appendChild(goalsDiv);
+
+        const chip = document.createElement("div");
+        let chipClass, chipText;
+        if (activePending) {
+          chipClass = "chip-requested";
+          chipText = `Weekly-Anfrage offen: ${activePending.amount} € – wartet darauf, als ausgezahlt markiert zu werden.`;
+        } else if (unpaid > 0) {
+          chipClass = "chip-open";
+          chipText = `Du kannst diese Woche noch ${unpaid} € Aktivitätsbonus einfordern.`;
+        } else {
+          chipClass = "chip-paid";
+          chipText = "Für diese Woche ist aktuell kein weiterer Aktivitätsbonus offen.";
+        }
+        chip.className = `reward-chip ${chipClass}`;
+        chip.textContent = chipText;
+        weeklyBox.appendChild(chip);
+
+        if (!activePending && claimPlan.amount > 0) {
+          const btn = document.createElement("button");
+          btn.className = "btn";
+          btn.textContent = `Wöchentlichen Bonus einfordern (${claimPlan.amount} €)`;
+          btn.addEventListener("click", async () => {
+            btn.disabled = true;
+            await createWeeklyClaim(stats.username, weeklyState);
+            location.reload();
+          });
+          weeklyBox.appendChild(btn);
+        } else if (activePending) {
+          const btnPaid = document.createElement("button");
+          btnPaid.className = "btn";
+          btnPaid.textContent = `Ausgezahlt (${activePending.amount} €)`;
+          btnPaid.addEventListener("click", async () => {
+            btnPaid.disabled = true;
+            await markWeeklyClaimPaid(stats.username, weeklyState);
+            location.reload();
+          });
+          weeklyBox.appendChild(btnPaid);
+
+          const btnCancel = document.createElement("button");
+          btnCancel.className = "btn btn-danger";
+          btnCancel.textContent = "Anfrage zurücksetzen";
+          btnCancel.addEventListener("click", async () => {
+            btnCancel.disabled = true;
+            await resetWeeklyClaim(stats.username, weeklyState);
+            location.reload();
+          });
+          weeklyBox.appendChild(btnCancel);
+        }
+
+        card.appendChild(weeklyBox);
       }
 
       cards.appendChild(card);
@@ -1029,16 +1472,23 @@
       const subtitle = document.getElementById("subtitle");
       subtitle.textContent = "Lade Daten von Chess.com & Firestore…";
 
+      const { weekKey } = getCurrentWeekRange();
       const playersCombined = [];
 
       for (const name of PLAYERS) {
         try {
           const stats = await loadChessStats(name);
-          const rewardDoc = await loadRewardDoc(name, stats.tacticsRating, stats.rapidRating);
-          const rewardState = computeRewardState(name, stats.tacticsRating, stats.rapidRating, rewardDoc);
+          const [rewardDoc, weeklyStats, weeklyDoc] = await Promise.all([
+            loadRewardDoc(name, stats.tacticsRating, stats.rapidRating),
+            loadWeeklyStats(name),
+            loadWeeklyDoc(name, weekKey)
+          ]);
 
-          playersCombined.push({ stats, rewardState });
-          renderPlayerCard(stats, rewardState);
+          const rewardState = computeRewardState(name, stats.tacticsRating, stats.rapidRating, rewardDoc);
+          const weeklyState = computeWeeklyState(name, weeklyStats, weeklyDoc, weekKey);
+
+          playersCombined.push({ stats, rewardState, weeklyState });
+          renderPlayerCard(stats, rewardState, weeklyState);
         } catch (e) {
           console.error("Fehler bei Spieler", name, e);
         }

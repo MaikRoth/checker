@@ -1,35 +1,23 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Chess Activity – Friends Dashboard</title>
+  <title>Chess Squad – Motivation Board</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #050816;
+      background: radial-gradient(circle at top, #020617 0, #020617 40%, #000 100%);
       color: #e5e7eb;
     }
 
     body {
       margin: 0;
-      padding: 2rem;
+      min-height: 100vh;
+      padding: 2rem 1.25rem 3rem;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2rem;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 2rem;
-      text-align: center;
-    }
-
-    .subtitle {
-      color: #9ca3af;
-      font-size: 0.9rem;
-      text-align: center;
     }
 
     main {
@@ -40,9 +28,35 @@
       gap: 2rem;
     }
 
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 3vw, 2.5rem);
+      text-align: center;
+    }
+
+    .subtitle {
+      color: #9ca3af;
+      font-size: 0.9rem;
+      text-align: center;
+      margin-top: 0.5rem;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      background: rgba(31,41,55,0.7);
+      border: 1px solid #1f2937;
+      color: #e5e7eb;
+    }
+
+    /* Layout */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
       gap: 1.5rem;
       width: 100%;
     }
@@ -50,7 +64,7 @@
     .card {
       background: radial-gradient(circle at top, #111827, #020617);
       border-radius: 1rem;
-      padding: 1.2rem 1.4rem;
+      padding: 1.2rem 1.4rem 1.3rem;
       border: 1px solid #1f2937;
       box-shadow: 0 18px 45px rgba(0,0,0,0.6);
     }
@@ -58,104 +72,127 @@
     .card-header {
       display: flex;
       justify-content: space-between;
+      gap: 0.75rem;
       align-items: center;
-      margin-bottom: 0.4rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .card-title-block {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 2px solid #22c55e;
+      object-fit: cover;
+      background: #020617;
+      flex-shrink: 0;
     }
 
     .username {
       font-weight: 600;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
     }
 
-    .badge {
+    .status-badge {
       padding: 0.2rem 0.6rem;
       border-radius: 999px;
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       font-weight: 600;
     }
 
-    .badge.active {
+    .status-active {
       background: #065f46;
       color: #bbf7d0;
     }
 
-    .badge.inactive {
+    .status-chill {
       background: #7f1d1d;
       color: #fecaca;
     }
 
     .section-title {
-      margin-top: 0.8rem;
-      font-size: 0.9rem;
+      margin-top: 0.7rem;
+      font-size: 0.82rem;
       font-weight: 600;
       color: #d1d5db;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
     }
 
-    .stats-row {
-      margin-top: 0.4rem;
-      font-size: 0.82rem;
-      color: #d1d5db;
+    .modes {
+      margin-top: 0.3rem;
       display: flex;
       flex-direction: column;
-      gap: 0.15rem;
+      gap: 0.35rem;
+      font-size: 0.78rem;
     }
 
-    .highlight {
-      color: #facc15;
-      font-weight: 600;
-    }
-
-    /* Win/Loss Bar */
-    .wl-wrapper {
-      margin-top: 0.6rem;
-      font-size: 0.8rem;
-    }
-
-    .wl-text {
-      margin-bottom: 0.2rem;
-      color: #d1d5db;
-    }
-
-    .wl-bar {
-      width: 100%;
-      height: 10px;
-      border-radius: 999px;
-      overflow: hidden;
-      background: #1f2937;
+    .mode-row {
       display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.3rem 0.4rem;
+      border-radius: 0.6rem;
+      background: rgba(15,23,42,0.7);
     }
 
-    .wl-segment {
-      height: 100%;
+    .mode-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
     }
 
-    .wl-win {
-      background: #16a34a; /* grün */
+    .mode-label {
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
     }
 
-    .wl-draw {
-      background: #6b7280; /* grau */
+    .mode-meta {
+      color: #9ca3af;
+      font-size: 0.72rem;
     }
 
-    .wl-loss {
-      background: #dc2626; /* rot */
+    .mode-right {
+      text-align: right;
+      font-size: 0.76rem;
     }
 
-    /* Achievements */
-    .achievements {
-      margin-top: 0.5rem;
+    .rating {
+      font-weight: 600;
+      color: #facc15;
+    }
+
+    .gap-good {
+      color: #22c55e;
+    }
+    .gap-mid {
+      color: #eab308;
+    }
+    .gap-bad {
+      color: #f97316;
+    }
+
+    .badge-row {
+      margin-top: 0.4rem;
       display: flex;
       flex-wrap: wrap;
       gap: 0.3rem;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
     }
 
-    .ach-badge {
-      padding: 0.2rem 0.5rem;
+    .badge {
+      padding: 0.18rem 0.55rem;
       border-radius: 999px;
       border: 1px solid #374151;
       background: #020617;
-      color: #e5e7eb;
       display: inline-flex;
       align-items: center;
       gap: 0.25rem;
@@ -163,76 +200,70 @@
       cursor: default;
     }
 
-    .ach-badge.gold {
+    .badge.gold {
       border-color: #fbbf24;
       color: #facc15;
     }
 
-    .ach-badge.silver {
+    .badge.silver {
       border-color: #9ca3af;
       color: #e5e7eb;
     }
 
-    .ach-badge.bronze {
+    .badge.bronze {
       border-color: #f97316;
       color: #fed7aa;
     }
 
-    .ach-badge.fail {
+    .badge.fail {
       border-color: #ef4444;
       color: #fecaca;
     }
 
-    /* Summary / leaderboards */
-    #summary {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
+    .focus {
+      margin-top: 0.6rem;
+      font-size: 0.8rem;
+      line-height: 1.4;
+      padding: 0.45rem 0.55rem;
+      border-radius: 0.6rem;
+      background: rgba(15,23,42,0.85);
+      border: 1px dashed #1f2937;
+      color: #e5e7eb;
     }
 
-    .summary-title {
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-bottom: 0.3rem;
+    .focus strong {
+      color: #a5b4fc;
     }
 
-    .summary-card {
+    /* Squad section */
+    .squad-card {
       background: #020617;
-      border-radius: 0.75rem;
+      border-radius: 0.9rem;
       border: 1px solid #1f2937;
       padding: 1rem 1.2rem;
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
+    .squad-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .squad-list {
       font-size: 0.8rem;
-    }
-
-    th, td {
-      padding: 0.3rem 0.4rem;
-      text-align: left;
-    }
-
-    th {
-      color: #d1d5db;
-      border-bottom: 1px solid #1f2937;
-    }
-
-    tr:nth-child(even) td {
-      background: rgba(15,23,42,0.4);
-    }
-
-    .duel-line {
-      font-size: 0.8rem;
-      margin-bottom: 0.2rem;
-      color: #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
     }
 
     footer {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: #6b7280;
       text-align: center;
+      margin-top: 1.5rem;
     }
 
     a {
@@ -243,611 +274,483 @@
 <body>
   <main>
     <header style="text-align:center;">
-      <h1>♟️ Chess Activity Dashboard</h1>
-      <p class="subtitle" id="subtitle">Lade Daten…</p>
+      <h1>♟️ Chess Squad Motivation Board</h1>
+      <p class="subtitle" id="subtitle">
+        Loading live stats from Chess.com…
+      </p>
     </header>
 
     <!-- Player cards -->
     <section class="grid" id="cards"></section>
 
-    <!-- Global leaderboards / duels / overview -->
-    <section id="summary"></section>
+    <!-- Squad goals / simple leaderboard -->
+    <section id="squad"></section>
+
+    <footer>
+      Data from the <a href="https://www.chess.com/news/view/published-data-api" target="_blank" rel="noreferrer">Chess.com Published Data API</a> · Have fun & don’t tilt ♥
+    </footer>
   </main>
 
-  <footer id="footer"></footer>
-
   <script>
+    // === CONFIG ===
     const PLAYERS = ["ERR_Daemon", "M41K", "Kathi_2905"];
-    const DAYS = 7;
-    const MS_PER_DAY = 24 * 60 * 60 * 1000;
+    const MODES = [
+      { key: "chess_rapid", label: "Rapid", icon: "⏱️" },
+      { key: "chess_blitz", label: "Blitz", icon: "⚡" },
+      { key: "chess_bullet", label: "Bullet", icon: "💣" },
+      { key: "chess_daily", label: "Daily", icon: "📬" },
+    ];
 
     async function fetchJson(url) {
       const res = await fetch(url);
-      if (!res.ok) {
-        throw new Error("HTTP " + res.status + " for " + url);
-      }
+      if (!res.ok) throw new Error("HTTP " + res.status + " for " + url);
       return res.json();
     }
 
     async function loadPlayer(username) {
       const uname = username.toLowerCase();
-      const nowMs = Date.now();
-      const thresholdMs = nowMs - DAYS * MS_PER_DAY;
+      const [profile, stats] = await Promise.allSettled([
+        fetchJson(`https://api.chess.com/pub/player/${uname}`),
+        fetchJson(`https://api.chess.com/pub/player/${uname}/stats`)
+      ]);
 
-      let games = [];
-      let wins = 0;
-      let losses = 0;
-      let draws = 0;
-      const timeControls = {};
+      const profileData = profile.status === "fulfilled" ? profile.value : {};
+      const statsData   = stats.status === "fulfilled"   ? stats.value   : {};
 
-      // --- Spiele der letzten X Tage ---
-      try {
-        const archivesData = await fetchJson(`https://api.chess.com/pub/player/${uname}/games/archives`);
-        const archives = archivesData.archives || [];
-        const recentArchives = archives.slice(-3);
+      const modes = MODES.map(m => extractMode(statsData, m.key, m.label, m.icon))
+        .filter(Boolean);
 
-        for (const url of recentArchives) {
-          try {
-            const data = await fetchJson(url);
-            (data.games || []).forEach(g => {
-              if (!g.end_time) return;
-              const endMs = g.end_time * 1000;
-              if (endMs < thresholdMs) return;
+      const tactics = extractTactics(statsData);
+      const puzzles = extractPuzzleRush(statsData);
 
-              const whiteUser = g.white && g.white.username;
-              const blackUser = g.black && g.black.username;
-              const whiteResult = g.white && g.white.result;
-              const blackResult = g.black && g.black.result;
+      const totalGames = modes.reduce((sum, m) => sum + m.games, 0);
+      const active = totalGames > 0;
 
-              const isWhite = whiteUser && whiteUser.toLowerCase() === uname;
-              const isBlack = blackUser && blackUser.toLowerCase() === uname;
-
-              if (!isWhite && !isBlack) return;
-
-              let myResult = isWhite ? whiteResult : blackResult;
-              let oppResult = isWhite ? blackResult : whiteResult;
-              let outcome = "draw";
-
-              if (myResult === "win") {
-                wins++;
-                outcome = "win";
-              } else if (oppResult === "win") {
-                losses++;
-                outcome = "loss";
-              } else {
-                draws++;
-                outcome = "draw";
-              }
-
-              const tc = g.time_class || "unknown";
-              timeControls[tc] = (timeControls[tc] || 0) + 1;
-
-              games.push({
-                endMs,
-                time_class: tc,
-                rated: g.rated,
-                white: whiteUser,
-                black: blackUser,
-                url: g.url,
-                result: outcome
-              });
-            });
-          } catch (e) {
-            console.error("Archiv-Fehler für", username, e);
-          }
-        }
-
-        games.sort((a, b) => b.endMs - a.endMs);
-      } catch (e) {
-        console.error("Fehler beim Laden der Archives für", username, e);
-      }
-
-      // --- Taktik-Stats ---
-      let tacticsCurrent = null;
-      let tacticsHigh = null;
-      let tacticsLow = null;
-
-      try {
-        const stats = await fetchJson(`https://api.chess.com/pub/player/${uname}/stats`);
-        const tactics = stats.tactics;
-        if (tactics) {
-          const last = tactics.last || {};
-          const highest = tactics.highest || {};
-          const lowest = tactics.lowest || {};
-
-          tacticsCurrent = (last.rating != null)
-            ? last.rating
-            : (highest.rating != null ? highest.rating : null);
-          tacticsHigh = highest.rating ?? null;
-          tacticsLow = lowest.rating ?? null;
-        }
-      } catch (e) {
-        console.error("Fehler beim Laden der Stats für", username, e);
-      }
-
-      // --- Streak-Berechnung (innerhalb der letzten DAYS) ---
-      const dayActive = new Array(DAYS).fill(false);
-      const nowMs2 = Date.now();
-      for (const g of games) {
-        const diff = nowMs2 - g.endMs;
-        if (diff < 0) continue;
-        const idx = Math.floor(diff / MS_PER_DAY);
-        if (idx >= 0 && idx < DAYS) {
-          dayActive[idx] = true;
-        }
-      }
-
-      let streakCurrent = 0;
-      for (let i = 0; i < DAYS; i++) {
-        if (dayActive[i]) streakCurrent++;
-        else break;
-      }
-
-      let streakLongest = 0;
-      let cur = 0;
-      for (let i = 0; i < DAYS; i++) {
-        if (dayActive[i]) {
-          cur++;
-          if (cur > streakLongest) streakLongest = cur;
-        } else {
-          cur = 0;
-        }
-      }
-
-      const totalGames = wins + losses + draws;
-      const winRate = totalGames ? Math.round((wins / totalGames) * 100) : 0;
-
-      // Momentum (letzte bis zu 10 Spiele)
-      let momentumScore = 0;
-      const recentForMomentum = games.slice(0, 10);
-      for (const g of recentForMomentum) {
-        if (g.result === "win") momentumScore++;
-        else if (g.result === "loss") momentumScore--;
-      }
-
-      let momentumLabel = "Neutral";
-      let momentumEmoji = "😐";
-      if (momentumScore >= 3) {
-        momentumLabel = "Uptrend";
-        momentumEmoji = "🚀";
-      } else if (momentumScore <= -3) {
-        momentumLabel = "Downtrend";
-        momentumEmoji = "⚠️";
-      } else if (momentumScore > 0) {
-        momentumLabel = "Leicht positiv";
-        momentumEmoji = "📈";
-      } else if (momentumScore < 0) {
-        momentumLabel = "Leicht negativ";
-        momentumEmoji = "📉";
-      }
+      const achievements = buildAchievements({ username, totalGames, modes, tactics, puzzles });
+      const focus = buildFocusSuggestion(modes, tactics, puzzles);
 
       return {
         username,
-        games,
-        wins,
-        losses,
-        draws,
+        avatar: profileData.avatar || null,
+        url: profileData.url || null,
+        modes,
+        tactics,
+        puzzles,
         totalGames,
-        winRate,
-        timeControls,
-        streakCurrent,
-        streakLongest,
-        tacticsCurrent,
-        tacticsHigh,
-        tacticsLow,
-        momentumScore,
-        momentumLabel,
-        momentumEmoji
+        active,
+        achievements,
+        focus
       };
     }
 
-    function renderWLBar(parent, player) {
-      const { wins, losses, draws, totalGames, winRate } = player;
-      const wrapper = document.createElement("div");
-      wrapper.className = "wl-wrapper";
+    function extractMode(stats, key, label, icon) {
+      const s = stats[key];
+      if (!s || !s.last || !s.record) return null;
 
-      if (!totalGames) {
-        wrapper.textContent = "Keine Partien im Zeitraum – keine Winrate.";
-        parent.appendChild(wrapper);
-        return;
-      }
+      const current = s.last.rating ?? null;
+      const best    = s.best && s.best.rating != null ? s.best.rating : null;
+      const rec     = s.record || {};
+      const wins  = rec.win   || 0;
+      const loss  = rec.loss  || 0;
+      const draw  = rec.draw  || 0;
+      const games = wins + loss + draw;
+      const winrate = games ? Math.round((wins / games) * 100) : null;
+      const gap = (best != null && current != null) ? best - current : null;
 
-      const winPct = Math.round((wins / totalGames) * 100);
-      const lossPct = Math.round((losses / totalGames) * 100);
-      const drawPct = 100 - winPct - lossPct;
-
-      const text = document.createElement("div");
-      text.className = "wl-text";
-      text.textContent =
-        `Wins: ${wins} · Losses: ${losses} · Draws: ${draws} · Winrate: ${winRate}%`;
-
-      const bar = document.createElement("div");
-      bar.className = "wl-bar";
-
-      const winSeg = document.createElement("div");
-      winSeg.className = "wl-segment wl-win";
-      winSeg.style.width = winPct + "%";
-
-      const drawSeg = document.createElement("div");
-      drawSeg.className = "wl-segment wl-draw";
-      drawSeg.style.width = drawPct + "%";
-
-      const lossSeg = document.createElement("div");
-      lossSeg.className = "wl-segment wl-loss";
-      lossSeg.style.width = lossPct + "%";
-
-      bar.appendChild(winSeg);
-      bar.appendChild(drawSeg);
-      bar.appendChild(lossSeg);
-
-      wrapper.appendChild(text);
-      wrapper.appendChild(bar);
-      parent.appendChild(wrapper);
-    }
-
-    // --- Achievements (gleich wie vorher, aber wir zeigen nur eine Handvoll) ---
-    function buildAchievements(player) {
-      const {
-        totalGames,
+      return {
+        key,
+        label,
+        icon,
+        current,
+        best,
         wins,
-        losses,
-        draws,
-        winRate,
-        tacticsCurrent,
-        streakCurrent,
-        streakLongest
-      } = player;
+        loss,
+        draw,
+        games,
+        winrate,
+        gap
+      };
+    }
 
-      const achievements = [];
+    function extractTactics(stats) {
+      const t = stats.tactics;
+      if (!t) return null;
+      const last    = t.last || {};
+      const highest = t.highest || {};
+      const lowest  = t.lowest || {};
+      const current = last.rating ?? highest.rating ?? null;
+      return {
+        current,
+        highest: highest.rating ?? null,
+        lowest: lowest.rating ?? null
+      };
+    }
 
+    function extractPuzzleRush(stats) {
+      const p = stats.puzzle_rush;
+      if (!p) return null;
+      const best  = p.best || {};
+      const daily = p.daily || {};
+      return {
+        bestScore: best.score ?? null,
+        bestAttempts: best.total_attempts ?? null,
+        todayScore: daily.score ?? null,
+        todayAttempts: daily.total_attempts ?? null
+      };
+    }
+
+    // === Achievements & Focus ===
+    function buildAchievements(player) {
+      const { totalGames, modes, tactics, puzzles } = player;
+      const ach = [];
+
+      // Volume
       if (totalGames === 0) {
-        achievements.push({
-          label: "😴 AFK",
-          desc: "Keine Partien in diesem Zeitraum. Höchste Zeit, wieder zu spielen!",
-          style: "fail"
-        });
-      } else {
-        if (totalGames >= 20) {
-          achievements.push({
-            label: "🏃 Ultra Grinder",
-            desc: `${totalGames} Partien in ${DAYS} Tagen.`,
-            style: "gold"
+        ach.push({ label: "😴 AFK", style: "fail", title: "No games yet – time for a comeback." });
+      } else if (totalGames >= 200) {
+        ach.push({ label: "🧱 Iron Grinder", style: "gold", title: `${totalGames} total games.` });
+      } else if (totalGames >= 100) {
+        ach.push({ label: "🏃‍♂️ Grinder", style: "silver", title: `${totalGames} total games.` });
+      } else if (totalGames >= 50) {
+        ach.push({ label: "🎯 Warmed Up", style: "bronze", title: `${totalGames} total games.` });
+      }
+
+      // Best winrate mode
+      const modesWithGames = modes.filter(m => m.games >= 20 && m.winrate != null);
+      if (modesWithGames.length) {
+        modesWithGames.sort((a, b) => b.winrate - a.winrate);
+        const best = modesWithGames[0];
+        if (best.winrate >= 60) {
+          ach.push({
+            label: `🔥 ${best.label} Boss`,
+            style: "gold",
+            title: `Winrate ${best.winrate}% in ${best.label}.`
           });
-        } else if (totalGames >= 10) {
-          achievements.push({
-            label: "🏃 Grinder",
-            desc: `${totalGames} Partien in ${DAYS} Tagen.`,
-            style: "silver"
-          });
-        } else if (totalGames >= 5) {
-          achievements.push({
-            label: "🎯 Warmgelaufen",
-            desc: `${totalGames} Partien in ${DAYS} Tagen.`,
-            style: "bronze"
+        } else if (best.winrate >= 55) {
+          ach.push({
+            label: `💪 ${best.label} Climber`,
+            style: "silver",
+            title: `Winrate ${best.winrate}% in ${best.label}.`
           });
         }
       }
 
-      if (totalGames >= 3) {
-        if (winRate >= 70) {
-          achievements.push({
-            label: "🔥 On Fire",
-            desc: `Winrate ${winRate}% in diesem Zeitraum.`,
-            style: "gold"
-          });
-        } else if (winRate >= 55) {
-          achievements.push({
-            label: "💪 Climber",
-            desc: `Winrate ${winRate}% – Elo-Klettertour.`,
-            style: "silver"
-          });
-        } else if (winRate <= 35) {
-          achievements.push({
-            label: "🩹 Tilt Alert",
-            desc: `Winrate nur ${winRate}%.`,
-            style: "fail"
-          });
+      // Comeback or PB close
+      for (const m of modes) {
+        if (m.current != null && m.best != null && m.games >= 30) {
+          const gap = m.gap;
+          if (gap != null && gap <= 20 && gap >= 0) {
+            ach.push({
+              label: `🏁 PB Chase (${m.label})`,
+              style: "bronze",
+              title: `Only ${gap} Elo from your ${m.label} peak.`
+            });
+            break;
+          }
         }
       }
 
-      if (draws >= 3) {
-        achievements.push({
-          label: "🧱 Solid Wall",
-          desc: `${draws} Remis – schwer zu knacken.`,
-          style: "bronze"
-        });
-      }
-
-      if (streakCurrent >= 3) {
-        achievements.push({
-          label: "📆 Streaker",
-          desc: `Aktuelle Streak: ${streakCurrent} Tage.`,
-          style: "silver"
-        });
-      } else if (streakLongest >= 4) {
-        achievements.push({
-          label: "🏅 Streak Legacy",
-          desc: `Beste Streak in diesem Zeitraum: ${streakLongest} Tage.`,
-          style: "bronze"
-        });
-      }
-
-      if (tacticsCurrent != null) {
-        if (tacticsCurrent >= 2200) {
-          achievements.push({
-            label: "🧠 Tactics Monster",
-            desc: `Taktikwertung ${tacticsCurrent}.`,
-            style: "gold"
-          });
-        } else if (tacticsCurrent >= 1800) {
-          achievements.push({
-            label: "🧠 Tactics Pro",
-            desc: `Taktikwertung ${tacticsCurrent}.`,
-            style: "silver"
-          });
-        } else if (tacticsCurrent >= 1400) {
-          achievements.push({
-            label: "🧩 Student",
-            desc: `Taktikwertung ${tacticsCurrent}.`,
-            style: "bronze"
-          });
+      // Tactics / puzzles
+      if (tactics && tactics.current != null) {
+        if (tactics.current >= 2200) {
+          ach.push({ label: "🧠 Tactics Monster", style: "gold", title: `Tactics ${tactics.current}.` });
+        } else if (tactics.current >= 1800) {
+          ach.push({ label: "🧩 Tactics Pro", style: "silver", title: `Tactics ${tactics.current}.` });
+        } else if (tactics.current >= 1400) {
+          ach.push({ label: "📚 Tactics Student", style: "bronze", title: `Tactics ${tactics.current}.` });
         }
       }
 
-      return achievements;
+      if (puzzles && puzzles.bestScore != null) {
+        if (puzzles.bestScore >= 40) {
+          ach.push({ label: "⚡ Rush Demon", style: "gold", title: `Puzzle Rush best ${puzzles.bestScore}.` });
+        } else if (puzzles.bestScore >= 30) {
+          ach.push({ label: "⚡ Rush Grinder", style: "silver", title: `Puzzle Rush best ${puzzles.bestScore}.` });
+        }
+      }
+
+      return ach.slice(0, 3); // only most important
     }
 
-    function renderAchievements(parent, player) {
-      const achievements = buildAchievements(player);
-
-      const title = document.createElement("div");
-      title.className = "section-title";
-      title.textContent = "🏅 Achievements";
-      parent.appendChild(title);
-
-      const container = document.createElement("div");
-      container.className = "achievements";
-
-      if (achievements.length === 0) {
-        const empty = document.createElement("div");
-        empty.textContent = "Keine besonderen Achievements in diesem Zeitraum.";
-        empty.style.fontSize = "0.75rem";
-        empty.style.color = "#9ca3af";
-        container.appendChild(empty);
-      } else {
-        // Nur die wichtigsten / ersten 3 anzeigen
-        achievements.slice(0, 3).forEach(a => {
-          const span = document.createElement("span");
-          span.className = `ach-badge ${a.style}`;
-          span.textContent = a.label;
-          span.title = a.desc;
-          container.appendChild(span);
-        });
+    function buildFocusSuggestion(modes, tactics, puzzles) {
+      // 1. Mode where you’re furthest below PB
+      let worstGap = null;
+      let gapMode = null;
+      for (const m of modes) {
+        if (m.gap != null && m.gap > 0 && m.games >= 20) {
+          if (worstGap == null || m.gap > worstGap) {
+            worstGap = m.gap;
+            gapMode = m;
+          }
+        }
       }
 
-      parent.appendChild(container);
+      if (gapMode && worstGap >= 30) {
+        return {
+          title: `Grind ${gapMode.label}`,
+          text: `You are <strong>${worstGap} Elo</strong> below your best ${gapMode.label} rating. Play a focused mini-session (e.g. 3–5 games) and see if you can close the gap today.`
+        };
+      }
+
+      // 2. Mode with highest winrate but not many games → "play more"
+      const sortedByWR = modes
+        .filter(m => m.winrate != null && m.games >= 5)
+        .sort((a, b) => b.winrate - a.winrate);
+
+      if (sortedByWR.length) {
+        const m = sortedByWR[0];
+        if (m.winrate >= 60 && m.games < 80) {
+          return {
+            title: `${m.label} is your weapon`,
+            text: `Your winrate in <strong>${m.label}</strong> is ${m.winrate}%. That’s your comfort zone – queue up a streak there and farm confidence.`
+          };
+        }
+      }
+
+      // 3. Tactics / Puzzle focus
+      if (tactics && tactics.current != null) {
+        return {
+          title: "Tactics first",
+          text: `Do a short tactics block: aim for <strong>10–15 good puzzles</strong> around your rating (${tactics.current}). Then play – your calculation will feel much sharper.`
+        };
+      }
+
+      if (puzzles && puzzles.todayAttempts != null) {
+        return {
+          title: "Daily Rush",
+          text: `You’ve done <strong>${puzzles.todayAttempts}</strong> Puzzle Rush attempts today. Try one more run and beat today’s score${
+            puzzles.todayScore != null ? " (" + puzzles.todayScore + ")." : "."
+          }`
+        };
+      }
+
+      return {
+        title: "Just play",
+        text: "No clear weak spot detected – pick any mode you enjoy and get a few games in together."
+      };
     }
 
-    function renderCard(player) {
+    // === Rendering ===
+    function renderPlayerCard(player) {
       const cards = document.getElementById("cards");
 
-      const card = document.createElement("div");
+      const card = document.createElement("article");
       card.className = "card";
 
       const header = document.createElement("div");
       header.className = "card-header";
 
-      const name = document.createElement("div");
-      name.className = "username";
-      name.textContent = player.username;
+      const left = document.createElement("div");
+      left.className = "card-title-block";
 
-      const badge = document.createElement("div");
-      const active = player.totalGames > 0;
-      badge.className = "badge " + (active ? "active" : "inactive");
-      badge.textContent = active ? "AKTIV" : "INAKTIV";
+      if (player.avatar) {
+        const img = document.createElement("img");
+        img.src = player.avatar;
+        img.alt = player.username;
+        img.className = "avatar";
+        left.appendChild(img);
+      }
 
-      header.appendChild(name);
-      header.appendChild(badge);
+      const nameEl = document.createElement("div");
+      nameEl.className = "username";
+      nameEl.textContent = player.username;
+      left.appendChild(nameEl);
+
+      header.appendChild(left);
+
+      const status = document.createElement("div");
+      status.className = "status-badge " + (player.active ? "status-active" : "status-chill");
+      status.textContent = player.active ? "ACTIVE" : "CHILLING";
+      header.appendChild(status);
+
       card.appendChild(header);
 
-      // Kompakte Stats
-      const stats = document.createElement("div");
-      stats.className = "stats-row";
+      // Modes
+      const modesTitle = document.createElement("div");
+      modesTitle.className = "section-title";
+      modesTitle.textContent = "Ratings & personal bests";
+      card.appendChild(modesTitle);
 
-      stats.innerHTML = `
-        <div>Partien (letzte ${DAYS} Tage): <span class="highlight">${player.totalGames}</span></div>
-        <div>Winrate: <span class="highlight">${player.winRate}%</span> · Streak: ${player.streakCurrent} Tag(e)</div>
-        <div>Momentum: ${player.momentumEmoji} ${player.momentumLabel}</div>
-      `;
-      card.appendChild(stats);
+      const modesWrap = document.createElement("div");
+      modesWrap.className = "modes";
 
-      // Win/Loss/Draw Grafik
-      renderWLBar(card, player);
-
-      // Taktik kompakt
-      const tTitle = document.createElement("div");
-      tTitle.className = "section-title";
-      tTitle.textContent = "🧠 Taktikwertung";
-      card.appendChild(tTitle);
-
-      const tDiv = document.createElement("div");
-      tDiv.style.fontSize = "0.85rem";
-      if (
-        player.tacticsCurrent == null &&
-        player.tacticsHigh == null &&
-        player.tacticsLow == null
-      ) {
-        tDiv.textContent = "Keine Taktikdaten im API verfügbar.";
+      if (!player.modes.length) {
+        const p = document.createElement("div");
+        p.style.fontSize = "0.78rem";
+        p.style.color = "#9ca3af";
+        p.textContent = "No mode stats available in the API.";
+        modesWrap.appendChild(p);
       } else {
-        tDiv.innerHTML =
-          `Aktuell: <span class="highlight">${player.tacticsCurrent ?? "–"}</span>`;
-      }
-      card.appendChild(tDiv);
+        player.modes.forEach(m => {
+          const row = document.createElement("div");
+          row.className = "mode-row";
 
-      // Achievements (kompakt, max. 3)
-      renderAchievements(card, player);
+          const leftCol = document.createElement("div");
+          leftCol.className = "mode-left";
+
+          const label = document.createElement("div");
+          label.className = "mode-label";
+          label.innerHTML = `${m.icon} ${m.label}`;
+          leftCol.appendChild(label);
+
+          const meta = document.createElement("div");
+          meta.className = "mode-meta";
+          const winrateText = m.winrate != null ? `${m.winrate}%` : "–";
+          meta.textContent = `${m.games} games · Winrate ${winrateText}`;
+          leftCol.appendChild(meta);
+
+          const rightCol = document.createElement("div");
+          rightCol.className = "mode-right";
+
+          const current = document.createElement("div");
+          current.innerHTML = `<span class="rating">${m.current ?? "–"}</span>`;
+          rightCol.appendChild(current);
+
+          const gapText = document.createElement("div");
+          if (m.best != null && m.current != null) {
+            const gap = m.best - m.current;
+            let cls = "gap-mid";
+            let label = "";
+            if (gap <= 0) {
+              cls = "gap-good";
+              label = "New PB!";
+            } else if (gap <= 20) {
+              cls = "gap-good";
+              label = `${gap} to PB`;
+            } else if (gap <= 80) {
+              cls = "gap-mid";
+              label = `${gap} to PB`;
+            } else {
+              cls = "gap-bad";
+              label = `${gap} behind PB`;
+            }
+            gapText.innerHTML = `<span class="${cls}">${label}</span>`;
+          } else {
+            gapText.textContent = "—";
+          }
+          rightCol.appendChild(gapText);
+
+          row.appendChild(leftCol);
+          row.appendChild(rightCol);
+          modesWrap.appendChild(row);
+        });
+      }
+
+      card.appendChild(modesWrap);
+
+      // Achievements
+      const achTitle = document.createElement("div");
+      achTitle.className = "section-title";
+      achTitle.textContent = "Badges";
+      card.appendChild(achTitle);
+
+      const achRow = document.createElement("div");
+      achRow.className = "badge-row";
+
+      if (!player.achievements.length) {
+        const span = document.createElement("span");
+        span.style.color = "#9ca3af";
+        span.style.fontSize = "0.75rem";
+        span.textContent = "Play a bit more to unlock badges.";
+        achRow.appendChild(span);
+      } else {
+        player.achievements.forEach(a => {
+          const span = document.createElement("span");
+          span.className = `badge ${a.style}`;
+          span.textContent = a.label;
+          if (a.title) span.title = a.title;
+          achRow.appendChild(span);
+        });
+      }
+
+      card.appendChild(achRow);
+
+      // Focus block
+      const focusTitle = document.createElement("div");
+      focusTitle.className = "section-title";
+      focusTitle.textContent = "Today’s focus";
+      card.appendChild(focusTitle);
+
+      const focus = document.createElement("div");
+      focus.className = "focus";
+      focus.innerHTML = `<strong>${player.focus.title}</strong><br>${player.focus.text}`;
+      card.appendChild(focus);
 
       cards.appendChild(card);
     }
 
-    // --- Summary / Leaderboards / Duels (wie vorher) ---
-    function renderSummary(players) {
-      const summary = document.getElementById("summary");
-      summary.innerHTML = "";
+    function renderSquad(players) {
+      const container = document.getElementById("squad");
+      container.innerHTML = "";
 
-      // Leaderboard: Spiele
-      const gamesCard = document.createElement("div");
-      gamesCard.className = "summary-card";
-      const gamesTitle = document.createElement("div");
-      gamesTitle.className = "summary-title";
-      gamesTitle.textContent = "🏆 Leaderboard – gespielte Partien";
-      gamesCard.appendChild(gamesTitle);
+      const card = document.createElement("div");
+      card.className = "squad-card";
 
-      const tbl1 = document.createElement("table");
-      const h1 = document.createElement("tr");
-      h1.innerHTML = "<th>Platz</th><th>Spieler</th><th>Partien</th><th>Winrate</th>";
-      tbl1.appendChild(h1);
+      const title = document.createElement("div");
+      title.className = "squad-title";
+      title.innerHTML = "💬 Squad goals";
+      card.appendChild(title);
 
-      [...players]
-        .sort((a, b) => b.totalGames - a.totalGames)
-        .forEach((p, idx) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML =
-            `<td>${idx + 1}</td><td>${p.username}</td><td>${p.totalGames}</td><td>${p.winRate}%</td>`;
-          tbl1.appendChild(tr);
-        });
+      const list = document.createElement("div");
+      list.className = "squad-list";
 
-      gamesCard.appendChild(tbl1);
-      summary.appendChild(gamesCard);
+      // Highest rapid
+      const allModes = [];
+      players.forEach(p => p.modes.forEach(m => allModes.push({ player: p.username, ...m })));
 
-      // Leaderboard: Winrate (mind. 3 Spiele)
-      const winrateCard = document.createElement("div");
-      winrateCard.className = "summary-card";
-      const winrateTitle = document.createElement("div");
-      winrateTitle.className = "summary-title";
-      winrateTitle.textContent = "📈 Leaderboard – Winrate (min. 3 Partien)";
-      winrateCard.appendChild(winrateTitle);
-
-      const tbl2 = document.createElement("table");
-      const h2 = document.createElement("tr");
-      h2.innerHTML = "<th>Platz</th><th>Spieler</th><th>Winrate</th><th>Partien</th>";
-      tbl2.appendChild(h2);
-
-      [...players]
-        .filter(p => p.totalGames >= 3)
-        .sort((a, b) => b.winRate - a.winRate)
-        .forEach((p, idx) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML =
-            `<td>${idx + 1}</td><td>${p.username}</td><td>${p.winRate}%</td><td>${p.totalGames}</td>`;
-          tbl2.appendChild(tr);
-        });
-
-      if (tbl2.rows.length === 1) {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td colspan="4">Noch zu wenig Partien für einen fairen Vergleich.</td>`;
-        tbl2.appendChild(tr);
+      const rapid = allModes.filter(m => m.key === "chess_rapid" && m.current != null);
+      if (rapid.length) {
+        rapid.sort((a, b) => b.current - a.current);
+        const r = rapid[0];
+        const nextMilestone = nextRatingMilestone(r.current);
+        list.innerHTML += `<div>🏆 Highest Rapid: <strong>${r.player}</strong> (${r.current}). Next shared target: <strong>${nextMilestone}</strong> Rapid for everyone.</div>`;
       }
 
-      winrateCard.appendChild(tbl2);
-      summary.appendChild(winrateCard);
-
-      // Leaderboard: Taktikwertung
-      const tacticsCard = document.createElement("div");
-      tacticsCard.className = "summary-card";
-      const tacticsTitle = document.createElement("div");
-      tacticsTitle.className = "summary-title";
-      tacticsTitle.textContent = "🧠 Leaderboard – Taktikwertung";
-      tacticsCard.appendChild(tacticsTitle);
-
-      const tbl3 = document.createElement("table");
-      const h3 = document.createElement("tr");
-      h3.innerHTML = "<th>Platz</th><th>Spieler</th><th>Aktuell</th>";
-      tbl3.appendChild(h3);
-
-      const withTactics = players.filter(p => p.tacticsCurrent != null);
-      withTactics
-        .sort((a, b) => b.tacticsCurrent - a.tacticsCurrent)
-        .forEach((p, idx) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML =
-            `<td>${idx + 1}</td><td>${p.username}</td><td>${p.tacticsCurrent}</td>`;
-          tbl3.appendChild(tr);
-        });
-
-      if (!withTactics.length) {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td colspan="3">Keine Taktikdaten für jemanden verfügbar.</td>`;
-        tbl3.appendChild(tr);
+      // Tactics king
+      const tacticsPlayers = players.filter(p => p.tactics && p.tactics.current != null);
+      if (tacticsPlayers.length) {
+        tacticsPlayers.sort((a, b) => b.tactics.current - a.tactics.current);
+        const t = tacticsPlayers[0];
+        list.innerHTML += `<div>🧠 Tactics boss: <strong>${t.username}</strong> (${t.tactics.current}). Everyone else: do 10 puzzles and try to catch up.</div>`;
       }
 
-      tacticsCard.appendChild(tbl3);
-      summary.appendChild(tacticsCard);
+      // Simple play reminder
+      const activeCount = players.filter(p => p.active).length;
+      list.innerHTML += `<div>🤝 Team challenge: all <strong>${players.length}</strong> play at least <strong>3 games</strong> in your focus mode before the weekend.</div>`;
+      list.innerHTML += `<div>📆 Currently active this week: <strong>${activeCount}/${players.length}</strong>.</div>`;
 
-      // Duelle
-      const duelCard = document.createElement("div");
-      duelCard.className = "summary-card";
-      const duelTitle = document.createElement("div");
-      duelTitle.className = "summary-title";
-      duelTitle.textContent = "⚔️ Duelle – Wer dominiert die Woche?";
-      duelCard.appendChild(duelTitle);
+      card.appendChild(list);
+      container.appendChild(card);
+    }
 
-      for (let i = 0; i < players.length; i++) {
-        for (let j = i + 1; j < players.length; j++) {
-          const a = players[i];
-          const b = players[j];
-
-          let scoreA = 0;
-          let scoreB = 0;
-
-          if (a.totalGames > b.totalGames) scoreA++;
-          else if (b.totalGames > a.totalGames) scoreB++;
-
-          if (a.totalGames >= 3 && b.totalGames >= 3) {
-            if (a.winRate > b.winRate) scoreA++;
-            else if (b.winRate > a.winRate) scoreB++;
-          }
-
-          if (a.tacticsCurrent != null && b.tacticsCurrent != null) {
-            if (a.tacticsCurrent > b.tacticsCurrent) scoreA++;
-            else if (b.tacticsCurrent > a.tacticsCurrent) scoreB++;
-          }
-
-          let resultText = "";
-          if (scoreA > scoreB) {
-            resultText = `👑 ${a.username} führt gegen ${b.username} (${scoreA} : ${scoreB})`;
-          } else if (scoreB > scoreA) {
-            resultText = `👑 ${b.username} führt gegen ${a.username} (${scoreB} : ${scoreA})`;
-          } else {
-            resultText = `🤝 ${a.username} und ${b.username} sind im Gleichstand (${scoreA} : ${scoreB}).`;
-          }
-
-          const line = document.createElement("div");
-          line.className = "duel-line";
-          line.textContent = resultText;
-          duelCard.appendChild(line);
-        }
+    function nextRatingMilestone(rating) {
+      if (rating == null) return "next step";
+      const milestones = [1000, 1200, 1400, 1600, 1800, 2000];
+      for (const m of milestones) {
+        if (rating < m) return m;
       }
-
-      summary.appendChild(duelCard);
+      return rating + 50;
     }
 
     async function init() {
       const subtitle = document.getElementById("subtitle");
-      subtitle.textContent = "Lade Daten direkt von chess.com…";
+      subtitle.textContent = "Loading from Chess.com…";
 
-      const players = await Promise.all(PLAYERS.map(loadPlayer));
+      const players = [];
+      for (const name of PLAYERS) {
+        try {
+          const p = await loadPlayer(name);
+          players.push(p);
+        } catch (e) {
+          console.error("Error loading", name, e);
+        }
+      }
 
-      players.forEach(p => renderCard(p));
-      renderSummary(players);
+      players.forEach(renderPlayerCard);
+      renderSquad(players);
 
       const now = new Date();
-      subtitle.textContent =
-        `Zeitraum: letzte ${DAYS} Tage · Stand: ${now.toLocaleString()}`;
-
-      const footer = document.getElementById("footer");
-      footer.innerHTML =
-        `Datenquelle: <a href="https://www.chess.com/news/view/published-data-api" target="_blank" rel="noreferrer">Chess.com Published Data API</a>`;
+      subtitle.textContent = `Live stats · updated ${now.toLocaleString()}`;
     }
 
     init();

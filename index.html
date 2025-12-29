@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>Chess Squad – Motivation Board</title>
+  <title>Chess Squad – Motivation & Belohnungen</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -41,22 +41,9 @@
       margin-top: 0.5rem;
     }
 
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      padding: 0.15rem 0.6rem;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      background: rgba(31,41,55,0.7);
-      border: 1px solid #1f2937;
-      color: #e5e7eb;
-    }
-
-    /* Layout */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 1.5rem;
       width: 100%;
     }
@@ -235,7 +222,80 @@
       color: #a5b4fc;
     }
 
-    /* Squad section */
+    .reward-row {
+      margin-top: 0.4rem;
+      font-size: 0.8rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      row-gap: 0.15rem;
+      column-gap: 0.5rem;
+    }
+
+    .reward-label {
+      color: #9ca3af;
+    }
+
+    .reward-value {
+      text-align: right;
+      font-weight: 600;
+    }
+
+    .reward-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      margin-top: 0.35rem;
+    }
+
+    .chip-open {
+      background: rgba(234,179,8,0.15);
+      border: 1px solid #eab308;
+      color: #fde68a;
+    }
+
+    .chip-requested {
+      background: rgba(59,130,246,0.15);
+      border: 1px solid #3b82f6;
+      color: #bfdbfe;
+    }
+
+    .chip-paid {
+      background: rgba(34,197,94,0.15);
+      border: 1px solid #22c55e;
+      color: #bbf7d0;
+    }
+
+    .btn {
+      margin-top: 0.5rem;
+      padding: 0.35rem 0.8rem;
+      border-radius: 999px;
+      border: 1px solid #22c55e;
+      background: #022c22;
+      color: #bbf7d0;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .btn:hover {
+      filter: brightness(1.1);
+    }
+
+    .btn-secondary {
+      border-color: #3b82f6;
+      background: #0b2239;
+      color: #bfdbfe;
+      margin-left: 0.3rem;
+    }
+
+    .btn-danger {
+      border-color: #ef4444;
+      background: #450a0a;
+      color: #fecaca;
+      margin-left: 0.3rem;
+    }
+
     .squad-card {
       background: #020617;
       border-radius: 0.9rem;
@@ -274,32 +334,64 @@
 <body>
   <main>
     <header style="text-align:center;">
-      <h1>♟️ Chess Squad Motivation Board</h1>
+      <h1>♟️ Chess Squad – Motivation & Belohnungen</h1>
       <p class="subtitle" id="subtitle">
-        Loading live stats from Chess.com…
+        Lade Live-Daten von Chess.com…
       </p>
     </header>
 
-    <!-- Player cards -->
     <section class="grid" id="cards"></section>
-
-    <!-- Squad goals / simple leaderboard -->
     <section id="squad"></section>
 
     <footer>
-      Data from the <a href="https://www.chess.com/news/view/published-data-api" target="_blank" rel="noreferrer">Chess.com Published Data API</a> · Have fun & don’t tilt ♥
+      Datenquelle: <a href="https://www.chess.com/news/view/published-data-api" target="_blank" rel="noreferrer">Chess.com Published Data API</a> · Backend: Firebase Firestore
     </footer>
   </main>
 
-  <script>
-    // === CONFIG ===
+  <script type="module">
+    // === Firebase Setup ===
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      updateDoc,
+      serverTimestamp
+    } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+    // TODO: Hier deine Firebase-Konfiguration aus der Firebase Console einfügen
+    const firebaseConfig = {
+  apiKey: "AIzaSyBtEkLjoW0pEqxOodau5dAArMkkf1hgjnc",
+  authDomain: "chess-rewards.firebaseapp.com",
+  projectId: "chess-rewards",
+  storageBucket: "chess-rewards.firebasestorage.app",
+  messagingSenderId: "118996095284",
+  appId: "1:118996095284:web:0a80d27fe93668563cd561"
+};
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // === Konfiguration ===
     const PLAYERS = ["ERR_Daemon", "M41K", "Kathi_2905"];
+    const CHEF_USERNAME = "M41K"; // du, bekommst keine Rewards angezeigt
+
     const MODES = [
-      { key: "chess_rapid", label: "Rapid", icon: "⏱️" },
-      { key: "chess_blitz", label: "Blitz", icon: "⚡" },
-      { key: "chess_bullet", label: "Bullet", icon: "💣" },
-      { key: "chess_daily", label: "Daily", icon: "📬" },
+      { key: "chess_rapid", label: "Rapid",  icon: "⏱️" },
+      { key: "chess_blitz", label: "Blitz",  icon: "⚡" },
+      { key: "chess_bullet",label: "Bullet", icon: "💣" },
+      { key: "chess_daily", label: "Daily",  icon: "📬" },
     ];
+
+    const RAPID_MILESTONES = [
+      { rating: 500,  reward:  50 },
+      { rating: 1000, reward: 100 },
+      { rating: 1500, reward: 150 },
+      { rating: 2000, reward: 200 }
+    ];
+
+    const REWARD_COLLECTION = "rewardProgress";
 
     async function fetchJson(url) {
       const res = await fetch(url);
@@ -307,7 +399,8 @@
       return res.json();
     }
 
-    async function loadPlayer(username) {
+    // === Chess.com Stats laden ===
+    async function loadChessStats(username) {
       const uname = username.toLowerCase();
       const [profile, stats] = await Promise.allSettled([
         fetchJson(`https://api.chess.com/pub/player/${uname}`),
@@ -321,13 +414,13 @@
         .filter(Boolean);
 
       const tactics = extractTactics(statsData);
-      const puzzles = extractPuzzleRush(statsData);
 
       const totalGames = modes.reduce((sum, m) => sum + m.games, 0);
       const active = totalGames > 0;
 
-      const achievements = buildAchievements({ username, totalGames, modes, tactics, puzzles });
-      const focus = buildFocusSuggestion(modes, tactics, puzzles);
+      const tacticsRating = tactics?.current ?? null;
+      const rapidMode = modes.find(m => m.key === "chess_rapid");
+      const rapidRating = rapidMode?.current ?? null;
 
       return {
         username,
@@ -335,11 +428,10 @@
         url: profileData.url || null,
         modes,
         tactics,
-        puzzles,
         totalGames,
         active,
-        achievements,
-        focus
+        tacticsRating,
+        rapidRating
       };
     }
 
@@ -386,154 +478,291 @@
       };
     }
 
-    function extractPuzzleRush(stats) {
-      const p = stats.puzzle_rush;
-      if (!p) return null;
-      const best  = p.best || {};
-      const daily = p.daily || {};
+    // === Firestore Reward-Dokument ===
+    async function loadRewardDoc(username, tacticsRating, rapidRating) {
+      const id = username.toLowerCase();
+      const ref = doc(db, REWARD_COLLECTION, id);
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) {
+        // Baseline = aktuelles Rating zum ersten Zeitpunkt
+        const baselineTactics = tacticsRating ?? 0;
+        const baselineRapid   = rapidRating ?? 0;
+        const initData = {
+          baselineTactics,
+          baselineRapid,
+          tacticsStepsClaimed: 0,
+          rapidStepsClaimed: 0,
+          rapidMilestonesClaimed: [],
+          pendingClaim: null,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        };
+        await setDoc(ref, initData);
+        return initData;
+      }
+
+      return snap.data();
+    }
+
+    // === Rewards berechnen ===
+    function computeRewardState(username, tacticsRating, rapidRating, rewardDoc) {
+      const isChef = username === CHEF_USERNAME;
+
+      const baselineT = rewardDoc.baselineTactics ?? 0;
+      const baselineR = rewardDoc.baselineRapid   ?? 0;
+
+      const tNow = tacticsRating ?? 0;
+      const rNow = rapidRating   ?? 0;
+
+      // Taktik: 10 € pro +100 Elo über Baseline
+      const deltaT = Math.max(0, tNow - baselineT);
+      const tacticsStepsTotal = Math.floor(deltaT / 100);
+      const tacticsRewardRaw  = tacticsStepsTotal * 10;
+
+      const tacticsStepsClaimed = rewardDoc.tacticsStepsClaimed ?? 0;
+      const tacticsStepsPaid    = Math.min(tacticsStepsClaimed, tacticsStepsTotal);
+      const tacticsStepsNew     = Math.max(0, tacticsStepsTotal - tacticsStepsPaid);
+      const tacticsPaid         = tacticsStepsPaid * 10;
+      const tacticsUnpaid       = tacticsStepsNew  * 10;
+
+      const nextTacticsTarget = baselineT + (tacticsStepsTotal + 1) * 100;
+      const tacticsToNext     = Math.max(0, nextTacticsTarget - tNow);
+
+      // Rapid: 10 € pro +100 Elo über Baseline + Meilensteine
+      const deltaR = Math.max(0, rNow - baselineR);
+      const rapidStepsTotal = Math.floor(deltaR / 100);
+      const rapidStepsRewardRaw = rapidStepsTotal * 10;
+
+      const rapidStepsClaimed = rewardDoc.rapidStepsClaimed ?? 0;
+      const rapidStepsPaid    = Math.min(rapidStepsClaimed, rapidStepsTotal);
+      const rapidStepsNew     = Math.max(0, rapidStepsTotal - rapidStepsPaid);
+      const rapidStepsPaidEuro   = rapidStepsPaid * 10;
+      const rapidStepsUnpaidEuro = rapidStepsNew * 10;
+
+      const claimedMilestones = rewardDoc.rapidMilestonesClaimed ?? [];
+      const reachedMilestones = RAPID_MILESTONES.filter(m =>
+        m.rating > baselineR && m.rating <= rNow
+      );
+      const reachedRatings = reachedMilestones.map(m => m.rating);
+      const newMilestones = reachedMilestones.filter(m => !claimedMilestones.includes(m.rating));
+      const milestoneRewardRaw = reachedMilestones.reduce((sum, m) => sum + m.reward, 0);
+      const milestonePaid = reachedMilestones
+        .filter(m => claimedMilestones.includes(m.rating))
+        .reduce((sum, m) => sum + m.reward, 0);
+      const milestoneUnpaid = milestoneRewardRaw - milestonePaid;
+
+      const rapidRewardRaw = rapidStepsRewardRaw + milestoneRewardRaw;
+      const rapidPaid      = rapidStepsPaidEuro + milestonePaid;
+      const rapidUnpaid    = rapidStepsUnpaidEuro + milestoneUnpaid;
+
+      const totalRaw    = tacticsRewardRaw + rapidRewardRaw;
+      const totalPaid   = tacticsPaid + rapidPaid;
+      const totalUnpaid = totalRaw - totalPaid;
+
+      const pending = rewardDoc.pendingClaim || null;
+
+      const claimable = {
+        tacticsStepsToClaim: tacticsStepsNew,
+        rapidStepsToClaim: rapidStepsNew,
+        rapidMilestonesToClaim: newMilestones.map(m => m.rating),
+        amount: totalUnpaid
+      };
+
       return {
-        bestScore: best.score ?? null,
-        bestAttempts: best.total_attempts ?? null,
-        todayScore: daily.score ?? null,
-        todayAttempts: daily.total_attempts ?? null
+        isChef,
+        baselineT,
+        baselineR,
+        tactics: {
+          now: tNow,
+          delta: deltaT,
+          stepsTotal: tacticsStepsTotal,
+          rewardRaw: tacticsRewardRaw,
+          paid: tacticsPaid,
+          unpaid: tacticsUnpaid,
+          toNext: tacticsToNext
+        },
+        rapid: {
+          now: rNow,
+          delta: deltaR,
+          stepsTotal: rapidStepsTotal,
+          stepsRewardRaw: rapidStepsRewardRaw,
+          stepsPaidEuro: rapidStepsPaidEuro,
+          stepsUnpaidEuro: rapidStepsUnpaidEuro,
+          reachedMilestones,
+          claimedMilestones,
+          newMilestones,
+          milestoneRewardRaw,
+          milestonePaid,
+          milestoneUnpaid,
+          rewardRaw: rapidRewardRaw,
+          paid: rapidPaid,
+          unpaid: rapidUnpaid
+        },
+        total: {
+          raw: totalRaw,
+          paid: totalPaid,
+          unpaid: totalUnpaid
+        },
+        claimable,
+        pending
       };
     }
 
-    // === Achievements & Focus ===
-    function buildAchievements(player) {
-      const { totalGames, modes, tactics, puzzles } = player;
+    // Claim anlegen (Status: requested)
+    async function createClaim(username, rewardState) {
+      const id = username.toLowerCase();
+      const ref = doc(db, REWARD_COLLECTION, id);
+
+      const { claimable } = rewardState;
+      if (claimable.amount <= 0) return;
+
+      const pendingClaim = {
+        status: "requested",
+        amount: claimable.amount,
+        tacticsStepsToClaim: claimable.tacticsStepsToClaim,
+        rapidStepsToClaim: claimable.rapidStepsToClaim,
+        rapidMilestonesToClaim: claimable.rapidMilestonesToClaim,
+        createdAt: serverTimestamp()
+      };
+
+      await updateDoc(ref, {
+        pendingClaim,
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    // Claim als bezahlt markieren (Schritte & Milestones werden "verbraucht")
+    async function markClaimPaid(username, rewardState) {
+      const id = username.toLowerCase();
+      const ref = doc(db, REWARD_COLLECTION, id);
+      const pending = rewardState.pending;
+      if (!pending || pending.status !== "requested") return;
+
+      const snap = await getDoc(ref);
+      if (!snap.exists()) return;
+      const data = snap.data();
+
+      const currentTacticsStepsClaimed = data.tacticsStepsClaimed ?? 0;
+      const currentRapidStepsClaimed   = data.rapidStepsClaimed ?? 0;
+      const currentRapidMilestonesClaimed = data.rapidMilestonesClaimed ?? [];
+
+      const newTacticsStepsClaimed =
+        currentTacticsStepsClaimed + (pending.tacticsStepsToClaim || 0);
+      const newRapidStepsClaimed =
+        currentRapidStepsClaimed + (pending.rapidStepsToClaim || 0);
+
+      const newMilestonesClaimed = Array.from(
+        new Set([
+          ...currentRapidMilestonesClaimed,
+          ...(pending.rapidMilestonesToClaim || [])
+        ])
+      );
+
+      await updateDoc(ref, {
+        tacticsStepsClaimed: newTacticsStepsClaimed,
+        rapidStepsClaimed: newRapidStepsClaimed,
+        rapidMilestonesClaimed: newMilestonesClaimed,
+        pendingClaim: {
+          ...pending,
+          status: "paid",
+          resolvedAt: serverTimestamp()
+        },
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    async function resetPendingClaim(username) {
+      const id = username.toLowerCase();
+      const ref = doc(db, REWARD_COLLECTION, id);
+      await updateDoc(ref, {
+        pendingClaim: null,
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    // === Achievements & Fokus (einfach) ===
+    function buildAchievements(stats, rewardState) {
+      const { totalGames, modes, tactics } = stats;
+      const { total } = rewardState;
       const ach = [];
 
-      // Volume
       if (totalGames === 0) {
-        ach.push({ label: "😴 AFK", style: "fail", title: "No games yet – time for a comeback." });
+        ach.push({ label: "😴 AFK", style: "fail", title: "Noch keine Partien – perfekte Gelegenheit für ein Comeback." });
       } else if (totalGames >= 200) {
-        ach.push({ label: "🧱 Iron Grinder", style: "gold", title: `${totalGames} total games.` });
+        ach.push({ label: "🧱 Iron Grinder", style: "gold", title: `${totalGames} Gesamtpartien.` });
       } else if (totalGames >= 100) {
-        ach.push({ label: "🏃‍♂️ Grinder", style: "silver", title: `${totalGames} total games.` });
+        ach.push({ label: "🏃 Grinder", style: "silver", title: `${totalGames} Gesamtpartien.` });
       } else if (totalGames >= 50) {
-        ach.push({ label: "🎯 Warmed Up", style: "bronze", title: `${totalGames} total games.` });
+        ach.push({ label: "🎯 Warmgelaufen", style: "bronze", title: `${totalGames} Gesamtpartien.` });
       }
 
-      // Best winrate mode
       const modesWithGames = modes.filter(m => m.games >= 20 && m.winrate != null);
       if (modesWithGames.length) {
         modesWithGames.sort((a, b) => b.winrate - a.winrate);
         const best = modesWithGames[0];
         if (best.winrate >= 60) {
           ach.push({
-            label: `🔥 ${best.label} Boss`,
+            label: `🔥 ${best.label}-Boss`,
             style: "gold",
             title: `Winrate ${best.winrate}% in ${best.label}.`
           });
-        } else if (best.winrate >= 55) {
-          ach.push({
-            label: `💪 ${best.label} Climber`,
-            style: "silver",
-            title: `Winrate ${best.winrate}% in ${best.label}.`
-          });
         }
       }
 
-      // Comeback or PB close
-      for (const m of modes) {
-        if (m.current != null && m.best != null && m.games >= 30) {
-          const gap = m.gap;
-          if (gap != null && gap <= 20 && gap >= 0) {
-            ach.push({
-              label: `🏁 PB Chase (${m.label})`,
-              style: "bronze",
-              title: `Only ${gap} Elo from your ${m.label} peak.`
-            });
-            break;
-          }
-        }
+      if (total.raw >= 50) {
+        ach.push({
+          label: "💶 Reward Hunter",
+          style: "silver",
+          title: `Schon ${total.raw} € an möglichen Belohnungen freigespielt.`
+        });
       }
 
-      // Tactics / puzzles
-      if (tactics && tactics.current != null) {
-        if (tactics.current >= 2200) {
-          ach.push({ label: "🧠 Tactics Monster", style: "gold", title: `Tactics ${tactics.current}.` });
-        } else if (tactics.current >= 1800) {
-          ach.push({ label: "🧩 Tactics Pro", style: "silver", title: `Tactics ${tactics.current}.` });
-        } else if (tactics.current >= 1400) {
-          ach.push({ label: "📚 Tactics Student", style: "bronze", title: `Tactics ${tactics.current}.` });
-        }
+      if (tactics && tactics.current != null && tactics.current >= 2200) {
+        ach.push({
+          label: "🧠 Tactics Monster",
+          style: "gold",
+          title: `Taktikwertung ${tactics.current}.`
+        });
       }
 
-      if (puzzles && puzzles.bestScore != null) {
-        if (puzzles.bestScore >= 40) {
-          ach.push({ label: "⚡ Rush Demon", style: "gold", title: `Puzzle Rush best ${puzzles.bestScore}.` });
-        } else if (puzzles.bestScore >= 30) {
-          ach.push({ label: "⚡ Rush Grinder", style: "silver", title: `Puzzle Rush best ${puzzles.bestScore}.` });
-        }
-      }
-
-      return ach.slice(0, 3); // only most important
+      return ach.slice(0, 3);
     }
 
-    function buildFocusSuggestion(modes, tactics, puzzles) {
-      // 1. Mode where you’re furthest below PB
-      let worstGap = null;
-      let gapMode = null;
-      for (const m of modes) {
-        if (m.gap != null && m.gap > 0 && m.games >= 20) {
-          if (worstGap == null || m.gap > worstGap) {
-            worstGap = m.gap;
-            gapMode = m;
-          }
-        }
-      }
+    function buildFocus(stats, rewardState) {
+      const { modes, tactics } = stats;
+      const { rapid, tactics: tState } = rewardState;
 
-      if (gapMode && worstGap >= 30) {
+      if (rapid.unpaid > 0) {
         return {
-          title: `Grind ${gapMode.label}`,
-          text: `You are <strong>${worstGap} Elo</strong> below your best ${gapMode.label} rating. Play a focused mini-session (e.g. 3–5 games) and see if you can close the gap today.`
+          title: "Rapid pushen",
+          text: `Du hast noch <strong>${rapid.unpaid} €</strong> Rapid-Belohnungen offen. Spiel ein paar konzentrierte Rapid-Partien.`
         };
       }
 
-      // 2. Mode with highest winrate but not many games → "play more"
-      const sortedByWR = modes
-        .filter(m => m.winrate != null && m.games >= 5)
-        .sort((a, b) => b.winrate - a.winrate);
-
-      if (sortedByWR.length) {
-        const m = sortedByWR[0];
-        if (m.winrate >= 60 && m.games < 80) {
-          return {
-            title: `${m.label} is your weapon`,
-            text: `Your winrate in <strong>${m.label}</strong> is ${m.winrate}%. That’s your comfort zone – queue up a streak there and farm confidence.`
-          };
-        }
+      if (tState.unpaid > 0) {
+        return {
+          title: "Taktikblock",
+          text: `Mit ein paar Taktik-Sessions kannst du weitere <strong>${tState.unpaid} €</strong> freischalten.`
+        };
       }
 
-      // 3. Tactics / Puzzle focus
       if (tactics && tactics.current != null) {
         return {
-          title: "Tactics first",
-          text: `Do a short tactics block: aim for <strong>10–15 good puzzles</strong> around your rating (${tactics.current}). Then play – your calculation will feel much sharper.`
-        };
-      }
-
-      if (puzzles && puzzles.todayAttempts != null) {
-        return {
-          title: "Daily Rush",
-          text: `You’ve done <strong>${puzzles.todayAttempts}</strong> Puzzle Rush attempts today. Try one more run and beat today’s score${
-            puzzles.todayScore != null ? " (" + puzzles.todayScore + ")." : "."
-          }`
+          title: "Mini-Taktikblock",
+          text: `Mach zuerst 10–15 Taktikaufgaben um deine aktuelle Wertung (${tactics.current}) herum, dann ab an die Bretter.`
         };
       }
 
       return {
-        title: "Just play",
-        text: "No clear weak spot detected – pick any mode you enjoy and get a few games in together."
+        title: "Einfach spielen",
+        text: "Such dir ein Zeitformat, das dir Spaß macht, und spiel ein paar ruhige, konzentrierte Partien."
       };
     }
 
     // === Rendering ===
-    function renderPlayerCard(player) {
+    function renderPlayerCard(stats, rewardState) {
       const cards = document.getElementById("cards");
-
       const card = document.createElement("article");
       card.className = "card";
 
@@ -543,45 +772,45 @@
       const left = document.createElement("div");
       left.className = "card-title-block";
 
-      if (player.avatar) {
+      if (stats.avatar) {
         const img = document.createElement("img");
-        img.src = player.avatar;
-        img.alt = player.username;
+        img.src = stats.avatar;
+        img.alt = stats.username;
         img.className = "avatar";
         left.appendChild(img);
       }
 
       const nameEl = document.createElement("div");
       nameEl.className = "username";
-      nameEl.textContent = player.username;
+      nameEl.textContent = stats.username; // kein (Chef) mehr
       left.appendChild(nameEl);
 
       header.appendChild(left);
 
       const status = document.createElement("div");
-      status.className = "status-badge " + (player.active ? "status-active" : "status-chill");
-      status.textContent = player.active ? "ACTIVE" : "CHILLING";
+      status.className = "status-badge " + (stats.active ? "status-active" : "status-chill");
+      status.textContent = stats.active ? "AKTIV" : "PAUSE";
       header.appendChild(status);
 
       card.appendChild(header);
 
-      // Modes
+      // Ratings & PBs
       const modesTitle = document.createElement("div");
       modesTitle.className = "section-title";
-      modesTitle.textContent = "Ratings & personal bests";
+      modesTitle.textContent = "Ratings & Bestleistungen";
       card.appendChild(modesTitle);
 
       const modesWrap = document.createElement("div");
       modesWrap.className = "modes";
 
-      if (!player.modes.length) {
+      if (!stats.modes.length) {
         const p = document.createElement("div");
         p.style.fontSize = "0.78rem";
         p.style.color = "#9ca3af";
-        p.textContent = "No mode stats available in the API.";
+        p.textContent = "Keine Partiedaten verfügbar.";
         modesWrap.appendChild(p);
       } else {
-        player.modes.forEach(m => {
+        stats.modes.forEach(m => {
           const row = document.createElement("div");
           row.className = "mode-row";
 
@@ -596,7 +825,7 @@
           const meta = document.createElement("div");
           meta.className = "mode-meta";
           const winrateText = m.winrate != null ? `${m.winrate}%` : "–";
-          meta.textContent = `${m.games} games · Winrate ${winrateText}`;
+          meta.textContent = `${m.games} Partien · Winrate ${winrateText}`;
           leftCol.appendChild(meta);
 
           const rightCol = document.createElement("div");
@@ -610,21 +839,21 @@
           if (m.best != null && m.current != null) {
             const gap = m.best - m.current;
             let cls = "gap-mid";
-            let label = "";
+            let labelText = "";
             if (gap <= 0) {
               cls = "gap-good";
-              label = "New PB!";
+              labelText = "Neue PB!";
             } else if (gap <= 20) {
               cls = "gap-good";
-              label = `${gap} to PB`;
+              labelText = `${gap} bis PB`;
             } else if (gap <= 80) {
               cls = "gap-mid";
-              label = `${gap} to PB`;
+              labelText = `${gap} bis PB`;
             } else {
               cls = "gap-bad";
-              label = `${gap} behind PB`;
+              labelText = `${gap} unter PB`;
             }
-            gapText.innerHTML = `<span class="${cls}">${label}</span>`;
+            gapText.innerHTML = `<span class="${cls}">${labelText}</span>`;
           } else {
             gapText.textContent = "—";
           }
@@ -638,7 +867,7 @@
 
       card.appendChild(modesWrap);
 
-      // Achievements
+      // Badges
       const achTitle = document.createElement("div");
       achTitle.className = "section-title";
       achTitle.textContent = "Badges";
@@ -646,15 +875,16 @@
 
       const achRow = document.createElement("div");
       achRow.className = "badge-row";
+      const achievements = buildAchievements(stats, rewardState);
 
-      if (!player.achievements.length) {
+      if (!achievements.length) {
         const span = document.createElement("span");
         span.style.color = "#9ca3af";
         span.style.fontSize = "0.75rem";
-        span.textContent = "Play a bit more to unlock badges.";
+        span.textContent = "Spiel ein bisschen mehr, um Badges freizuschalten.";
         achRow.appendChild(span);
       } else {
-        player.achievements.forEach(a => {
+        achievements.forEach(a => {
           const span = document.createElement("span");
           span.className = `badge ${a.style}`;
           span.textContent = a.label;
@@ -662,19 +892,103 @@
           achRow.appendChild(span);
         });
       }
-
       card.appendChild(achRow);
 
-      // Focus block
+      // Fokus
       const focusTitle = document.createElement("div");
       focusTitle.className = "section-title";
-      focusTitle.textContent = "Today’s focus";
+      focusTitle.textContent = "Heutiger Fokus";
       card.appendChild(focusTitle);
 
+      const focusInfo = buildFocus(stats, rewardState);
       const focus = document.createElement("div");
       focus.className = "focus";
-      focus.innerHTML = `<strong>${player.focus.title}</strong><br>${player.focus.text}`;
+      focus.innerHTML = `<strong>${focusInfo.title}</strong><br>${focusInfo.text}`;
       card.appendChild(focus);
+
+      // Belohnungen & Progression – NICHT für M41K
+      if (!rewardState.isChef) {
+        const rewardTitle = document.createElement("div");
+        rewardTitle.className = "section-title";
+        rewardTitle.textContent = "Belohnungen & Progression";
+        card.appendChild(rewardTitle);
+
+        const rewardBox = document.createElement("div");
+        rewardBox.className = "focus";
+
+        const { tactics, rapid, total, pending, claimable } = rewardState;
+        const activePending = pending && pending.status === "requested" ? pending : null;
+
+        rewardBox.innerHTML = `
+          <div class="reward-row">
+            <span class="reward-label">Gesamt erspielt (theoretisch):</span>
+            <span class="reward-value">${total.raw} €</span>
+            <span class="reward-label">Bereits ausgezahlt:</span>
+            <span class="reward-value">${total.paid} €</span>
+            <span class="reward-label">Noch offen:</span>
+            <span class="reward-value">${total.unpaid} €</span>
+          </div>
+          <hr style="border:none;border-top:1px solid #1f2937;margin:0.5rem 0;">
+          <div class="reward-row">
+            <span class="reward-label">Taktik (über ${rewardState.baselineT}):</span>
+            <span class="reward-value">${tactics.rewardRaw} €</span>
+            <span class="reward-label">Rapid (über ${rewardState.baselineR}):</span>
+            <span class="reward-value">${rapid.rewardRaw} €</span>
+          </div>
+        `;
+
+        // Status-Chip
+        const chip = document.createElement("div");
+        let chipClass, chipText;
+        if (activePending) {
+          chipClass = "chip-requested";
+          chipText = `Anfrage offen: ${activePending.amount} € – wartet darauf, als ausgezahlt markiert zu werden.`;
+        } else if (total.unpaid > 0) {
+          chipClass = "chip-open";
+          chipText = `Noch nicht angefordert: ${total.unpaid} €.`;
+        } else {
+          chipClass = "chip-paid";
+          chipText = "Alle erreichbaren Belohnungen sind aktuell als ausgezahlt markiert.";
+        }
+        chip.className = `reward-chip ${chipClass}`;
+        chip.textContent = chipText;
+        rewardBox.appendChild(chip);
+
+        // Buttons – jeder darf klicken, Vertrauenbasis
+        if (!activePending && total.unpaid > 0) {
+          const btn = document.createElement("button");
+          btn.className = "btn";
+          btn.textContent = `Belohnung einfordern (${total.unpaid} €)`;
+          btn.addEventListener("click", async () => {
+            btn.disabled = true;
+            await createClaim(stats.username, rewardState);
+            location.reload();
+          });
+          rewardBox.appendChild(btn);
+        } else if (activePending) {
+          const btnPaid = document.createElement("button");
+          btnPaid.className = "btn";
+          btnPaid.textContent = `Ausgezahlt (${activePending.amount} €)`;
+          btnPaid.addEventListener("click", async () => {
+            btnPaid.disabled = true;
+            await markClaimPaid(stats.username, rewardState);
+            location.reload();
+          });
+          rewardBox.appendChild(btnPaid);
+
+          const btnCancel = document.createElement("button");
+          btnCancel.className = "btn btn-danger";
+          btnCancel.textContent = "Anfrage zurücksetzen";
+          btnCancel.addEventListener("click", async () => {
+            btnCancel.disabled = true;
+            await resetPendingClaim(stats.username);
+            location.reload();
+          });
+          rewardBox.appendChild(btnCancel);
+        }
+
+        card.appendChild(rewardBox);
+      }
 
       cards.appendChild(card);
     }
@@ -688,69 +1002,52 @@
 
       const title = document.createElement("div");
       title.className = "squad-title";
-      title.innerHTML = "💬 Squad goals";
+      title.innerHTML = "💬 Squad-Übersicht";
       card.appendChild(title);
 
       const list = document.createElement("div");
       list.className = "squad-list";
 
-      // Highest rapid
       const allModes = [];
-      players.forEach(p => p.modes.forEach(m => allModes.push({ player: p.username, ...m })));
-
+      players.forEach(p => p.stats.modes.forEach(m => allModes.push({ player: p.stats.username, ...m })));
       const rapid = allModes.filter(m => m.key === "chess_rapid" && m.current != null);
       if (rapid.length) {
         rapid.sort((a, b) => b.current - a.current);
         const r = rapid[0];
-        const nextMilestone = nextRatingMilestone(r.current);
-        list.innerHTML += `<div>🏆 Highest Rapid: <strong>${r.player}</strong> (${r.current}). Next shared target: <strong>${nextMilestone}</strong> Rapid for everyone.</div>`;
+        list.innerHTML += `<div>🏆 Höchstes Rapid-Rating: <strong>${r.player}</strong> (${r.current}).</div>`;
       }
 
-      // Tactics king
-      const tacticsPlayers = players.filter(p => p.tactics && p.tactics.current != null);
-      if (tacticsPlayers.length) {
-        tacticsPlayers.sort((a, b) => b.tactics.current - a.tactics.current);
-        const t = tacticsPlayers[0];
-        list.innerHTML += `<div>🧠 Tactics boss: <strong>${t.username}</strong> (${t.tactics.current}). Everyone else: do 10 puzzles and try to catch up.</div>`;
-      }
-
-      // Simple play reminder
-      const activeCount = players.filter(p => p.active).length;
-      list.innerHTML += `<div>🤝 Team challenge: all <strong>${players.length}</strong> play at least <strong>3 games</strong> in your focus mode before the weekend.</div>`;
-      list.innerHTML += `<div>📆 Currently active this week: <strong>${activeCount}/${players.length}</strong>.</div>`;
+      const activeCount = players.filter(p => p.stats.active).length;
+      list.innerHTML += `<div>📆 Aktuell aktiv: <strong>${activeCount}/${players.length}</strong>.</div>`;
 
       card.appendChild(list);
       container.appendChild(card);
     }
 
-    function nextRatingMilestone(rating) {
-      if (rating == null) return "next step";
-      const milestones = [1000, 1200, 1400, 1600, 1800, 2000];
-      for (const m of milestones) {
-        if (rating < m) return m;
-      }
-      return rating + 50;
-    }
-
+    // === Init ===
     async function init() {
       const subtitle = document.getElementById("subtitle");
-      subtitle.textContent = "Loading from Chess.com…";
+      subtitle.textContent = "Lade Daten von Chess.com & Firestore…";
 
-      const players = [];
+      const playersCombined = [];
+
       for (const name of PLAYERS) {
         try {
-          const p = await loadPlayer(name);
-          players.push(p);
+          const stats = await loadChessStats(name);
+          const rewardDoc = await loadRewardDoc(name, stats.tacticsRating, stats.rapidRating);
+          const rewardState = computeRewardState(name, stats.tacticsRating, stats.rapidRating, rewardDoc);
+
+          playersCombined.push({ stats, rewardState });
+          renderPlayerCard(stats, rewardState);
         } catch (e) {
-          console.error("Error loading", name, e);
+          console.error("Fehler bei Spieler", name, e);
         }
       }
 
-      players.forEach(renderPlayerCard);
-      renderSquad(players);
+      renderSquad(playersCombined);
 
       const now = new Date();
-      subtitle.textContent = `Live stats · updated ${now.toLocaleString()}`;
+      subtitle.textContent = `Live-Stand · aktualisiert am ${now.toLocaleString()}`;
     }
 
     init();

@@ -722,8 +722,8 @@
     font-size: 0.7rem;
     color: #9ca3af;
     margin-top: 0.2rem;
-  }
-
+  } 
+  
   @media (max-width: 640px) {
     body {
       padding: 1.4rem 0.9rem 2.2rem;
@@ -1408,46 +1408,56 @@
 
     function buildAchievements(stats, rewardState, weeklyState) {
   const { totalGames, modes, tactics } = stats;
-  const { total, isChef } = rewardState;
+  const { total } = rewardState;
   const ach = [];
 
-  // Helper: Duplikate verhindern
-  const add = (label, style) => {
-    if (!ach.some(a => a.label === label)) {
-      ach.push({ label, style });
-    }
+  // Helper
+  const add = (label, style, tooltip) => {
+    ach.push({ label, style, tooltip });
   };
 
   // --- Volume / Grind ---
   if (totalGames >= 20) {
-    add("📚 Opening Book", "bronze");
+    add("📚 Opening Book", "bronze",
+        "Mindestens 20 Partien gespielt – Warm-up abgeschlossen.");
   }
   if (totalGames >= 50) {
-    add("🎯 Warmgelaufen", "bronze");
+    add("🎯 Warmgelaufen", "bronze",
+        "50+ Games – du bist im Flow.");
   }
   if (totalGames >= 100) {
-    add("🏃 Grinder", "silver");
+    add("🏃 Grinder", "silver",
+        "100+ Partien – richtiger Grinder.");
   }
   if (totalGames >= 300) {
-    add("🧱 Wall", "silver");
+    add("🧱 Wall", "silver",
+        "300+ Partien – stabile Erfahrungs-Mauer.");
   }
   if (totalGames >= 1000) {
-    add("♾ Marathon", "gold");
+    add("♾ Marathon", "gold",
+        "1.000+ gespielte Partien – Langstrecken-Grind.");
   }
 
   // --- Modus-Performance / Winrate ---
   const modesWithGames = modes.filter(m => m.games >= 20 && m.winrate != null);
 
   if (modesWithGames.length) {
-    // bester Modus nach Winrate
     modesWithGames.sort((a, b) => b.winrate - a.winrate);
     const best = modesWithGames[0];
 
     if (best.winrate >= 60) {
-      add(`🔥 ${best.label}`, "gold");
+      add(
+        `🔥 ${best.label}`,
+        "gold",
+        `Bester Modus nach Winrate (${best.winrate}% WR bei 20+ Games).`
+      );
     }
     if (best.winrate >= 65 && best.games >= 50) {
-      add("🌋 Peak Mode", "gold");
+      add(
+        "🌋 Peak Mode",
+        "gold",
+        "65%+ Winrate in einem Modus mit mindestens 50 Partien."
+      );
     }
   }
 
@@ -1457,7 +1467,11 @@
     if (mainMode && mainMode.best != null && mainMode.current != null) {
       const gap = mainMode.best - mainMode.current;
       if (gap <= 30) {
-        add("🧊 Tilt Control", "silver");
+        add(
+          "🧊 Tilt Control",
+          "silver",
+          "Max. 30 Elo unter PB im Main-Modus – kaum Tilt."
+        );
       }
     }
   }
@@ -1468,26 +1482,50 @@
   const tacticsElo = tactics?.current ?? null;
 
   if ((rapidElo != null && rapidElo >= 1500) || (tacticsElo != null && tacticsElo >= 1500)) {
-    add("🚀 Elo Climber", "silver");
+    add(
+      "🚀 Elo Climber",
+      "silver",
+      "1500+ Rapid- oder Taktik-Elo erreicht."
+    );
   }
 
   if (tacticsElo != null && tacticsElo >= 2200) {
-    add("🧠 Tactics", "gold");
+    add(
+      "🧠 Tactics",
+      "gold",
+      "Taktik-Rating 2200+ – Big-Brain-Badge."
+    );
   }
 
   // --- Rewards / Geld ---
   if (total.raw >= 50) {
-    add("💶 Rewards", "silver");
+    add(
+      "💶 Rewards",
+      "silver",
+      "Insgesamt 50€ oder mehr erspielt (Steps + Meilensteine)."
+    );
   }
 
   if (total.paid >= 10) {
-    add("💸 First Cashout", "bronze");
+    add(
+      "💸 First Cashout",
+      "bronze",
+      "Zum ersten Mal Geld aus dem System ausgezahlt bekommen."
+    );
   }
   if (total.paid >= 100) {
-    add("🏦 High Roller", "silver");
+    add(
+      "🏦 High Roller",
+      "silver",
+      "100€+ bereits ausgezahlt – High Roller Status."
+    );
   }
   if (total.unpaid >= 100) {
-    add("💰 Treasure Hunter", "gold");
+    add(
+      "💰 Treasure Hunter",
+      "gold",
+      "100€+ offen – ungehobener Reward-Schatz."
+    );
   }
 
   // --- Weekly / Disziplin ---
@@ -1496,16 +1534,24 @@
     const { totalGamesWeek, activeDaysCount, timeoutsWeek } = weeklyStats;
 
     if (totalGamesWeek >= 10 && timeoutsWeek === 0) {
-      add("🧘 No Tilt Week", "silver");
+      add(
+        "🧘 No Tilt Week",
+        "silver",
+        "Mindestens 10 Games in einer Woche ohne Timeout."
+      );
     }
     if (activeDaysCount >= 6) {
-      add("📆 Daily Grinder", "silver");
+      add(
+        "📆 Daily Grinder",
+        "silver",
+        "An 6+ Tagen in derselben Woche aktiv gespielt."
+      );
     }
   }
 
-  // keine Begrenzung mehr – alle Badges anzeigen
   return ach;
 }
+
 
     function renderPlayerCard(stats, rewardState, weeklyState) {
       const cards = document.getElementById("cards");
@@ -1850,8 +1896,12 @@ adminBox.innerHTML = `
           const span = document.createElement("span");
           span.className = `badge ${a.style}`;
           span.textContent = a.label;
+          if (a.tooltip) {
+            span.title = a.tooltip;
+          }
           achRow.appendChild(span);
         });
+
       }
       wrap.appendChild(achRow);
 

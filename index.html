@@ -11,20 +11,13 @@
     color: #e5e7eb;
   }
 
-  html,
-  body {
-    margin: 0;
-    min-height: 100vh;
-    background:
-      radial-gradient(circle at top, rgba(15,23,42,0.9), #020617 55%, #000 100%),
-      /* Schachbrett-Pattern, sehr subtil */
-      linear-gradient(90deg, rgba(15,23,42,0.26) 50%, transparent 50%),
-      linear-gradient(0deg, rgba(15,23,42,0.26) 50%, transparent 50%);
-    background-size:
-      auto,
-      64px 64px,
-      64px 64px;
-  }
+  
+html,
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at 50% 10%, #020617, #000 80%);
+}
 
   body {
     padding: 2rem 1.25rem 3rem;
@@ -800,12 +793,91 @@
       gap: 1rem;
     }
   }
+
+/* 3D Chessboard im Hintergrund */
+.chessboard-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  pointer-events: none;
+
+  /* ganz sicher sichtbar */
+  z-index: 0;
+}
+
+
+.chessboard {
+  width: min(95vw, 1100px);     /* deutlich größer */
+  aspect-ratio: 1 / 1;
+  display: grid;
+  grid-template-columns: repeat(8, 2fr);
+  grid-template-rows: repeat(8, 2fr);
+  border-radius: 18px;
+  overflow: hidden;
+  border: 2px solid rgba(148,163,184,0.6);
+
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255,255,255,0.12), transparent 55%),
+    radial-gradient(circle at 50% 100%, rgba(0,0,0,0.6), rgba(0,0,0,1));
+
+  transform: none;
+
+
+  filter: drop-shadow(0 80px 120px rgba(0,0,0,0.9));
+}
+
+
+/* einzelne Felder */
+.chessboard-square {
+  box-sizing: border-box;
+  border: 1px solid rgba(15,23,42,0.7);
+}
+
+/* dunkle und helle Felder */
+.chessboard-square.dark {
+  background: linear-gradient(135deg, #020617 0%, #020617 40%, #0b1120 100%);
+}
+
+.chessboard-square.light {
+  background: linear-gradient(135deg, #1f2937 0%, #020617 100%);
+}
+
+/* leichter Glow nach vorne hin */
+.chessboard-square:nth-child(n + 49) {
+  /* vordere Reihe(n) – wirken heller */
+  filter: brightness(1.07);
+}
+
+.chessboard-square:nth-child(n + 57) {
+  filter: brightness(1.12);
+}
+
+/* optional leichte Bewegung, damit es „lebt“ */
+@keyframes boardFloat {
+  0%   { transform: perspective(1400px) rotateX(72deg) translateY(0); }
+  50%  { transform: perspective(1400px) rotateX(73deg) translateY(6px); }
+  100% { transform: perspective(1400px) rotateX(72deg) translateY(0); }
+}
+
+.chessboard {
+  animation: boardFloat 18s ease-in-out infinite;
+}
+
 </style>
 
 </head>
 <body>
-  <div class="bg-anim"></div>
+   <div class="chessboard-bg">
+    <div class="chessboard" id="chessboard"></div>
+  </div>
 
+  <div class="bg-anim"></div>
   <main>
     <header>
       <h1>♞ Chess Squad – Progress Board</h1>
@@ -2531,7 +2603,29 @@
       }
     }
 
-    init();
+    function buildChessboard() {
+  const board = document.getElementById("chessboard");
+  if (!board) return;
+
+  // Nur einmal bauen
+  if (board.childElementCount > 0) return;
+
+  for (let rank = 0; rank < 8; rank++) {
+    for (let file = 0; file < 8; file++) {
+      const sq = document.createElement("div");
+      sq.classList.add("chessboard-square");
+
+      const isDark = (rank + file) % 2 === 0;
+      sq.classList.add(isDark ? "dark" : "light");
+
+      board.appendChild(sq);
+    }
+  }
+}
+
+buildChessboard();
+init();
+
   </script>
 </body>
 </html>

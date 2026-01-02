@@ -267,6 +267,12 @@
     color: #f9a8d4;
     border-color: rgba(236,72,153,0.75);
   }
+/* Nur bei der Freundin: erreichte Steps mit Herz markieren */
+.card-gf .step-item.gf-step-reached::after {
+  content: "💖";
+  margin-left: 0.2rem;
+  font-size: 0.7rem;
+}
 
   .section-title {
     margin-top: 0.4rem;
@@ -705,13 +711,22 @@
     flex-wrap: wrap;
   }
 
-  .gf-dot {
+    .gf-dot {
     width: 14px;
     height: 14px;
     border-radius: 999px;
     border: 1px solid #4b5563;
     background: rgba(15,23,42,0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: #f9a8d4;
   }
+    .gf-dot-reached::after {
+    content: "💖";
+  }
+
 
   .gf-dot-reached {
     background: radial-gradient(circle, #f9a8d4, #be185d);
@@ -1934,45 +1949,58 @@ adminBox.innerHTML = `
           const grid = document.createElement("div");
           grid.className = "step-grid";
 
-          rapidGroup.details.forEach(step => {
-            const item = document.createElement("div");
-            let cls = "step-locked";
-            if (step.status === "paid" || step.status === "open" || step.status === "baseline") {
-              cls = "step-open";
-            }
-            item.className = `step-item ${cls}`;
-            item.innerHTML = `<span>${step.rating}</span>`;
-            grid.appendChild(item);
-          });
+            rapidGroup.details.forEach(step => {
+              const item = document.createElement("div");
+              let cls = "step-locked";
+              if (step.status === "paid" || step.status === "open" || step.status === "baseline") {
+                cls = "step-open";
+              }
+              item.className = `step-item ${cls}`;
+              item.innerHTML = `<span>${step.rating}</span>`;
+
+              // NEU: alle erreichten Steps (<= aktueller Elo) bekommen ein Herz
+              if (rapidGroup.current != null && step.rating <= rapidGroup.current) {
+                item.classList.add("gf-step-reached");
+              }
+
+              grid.appendChild(item);
+            });
+
 
           journeyBox.appendChild(grid);
         }
 
-        if (tacticsGroup) {
-          const headerT = document.createElement("div");
-          headerT.className = "gf-journey-header";
-          headerT.innerHTML = `
-            <div class="gf-journey-label">🧠 Taktik · <span>${tacticsGroup.current ?? "–"} Elo</span></div>
-            <div class="gf-tagline">Brain Gains</div>
-          `;
-          journeyBox.appendChild(headerT);
+       if (tacticsGroup) {
+        const headerT = document.createElement("div");
+        headerT.className = "gf-journey-header";
+        headerT.innerHTML = `
+          <div class="gf-journey-label">🧠 Taktik · <span>${tacticsGroup.current ?? "–"} Elo</span></div>
+          <div class="gf-tagline">Brain Gains</div>
+        `;
+        journeyBox.appendChild(headerT);
 
-          const gridT = document.createElement("div");
-          gridT.className = "step-grid";
+        const gridT = document.createElement("div");
+        gridT.className = "step-grid";
 
-          tacticsGroup.details.forEach(step => {
-            const item = document.createElement("div");
-            let cls = "step-locked";
-            if (step.status === "paid" || step.status === "open" || step.status === "baseline") {
-              cls = "step-open";
-            }
-            item.className = `step-item ${cls}`;
-            item.innerHTML = `<span>${step.rating}</span>`;
-            gridT.appendChild(item);
-          });
+        tacticsGroup.details.forEach(step => {
+          const item = document.createElement("div");
+          let cls = "step-locked";
+          if (step.status === "paid" || step.status === "open" || step.status === "baseline") {
+            cls = "step-open";
+          }
+          item.className = `step-item ${cls}`;
+          item.innerHTML = `<span>${step.rating}</span>`;
 
-          journeyBox.appendChild(gridT);
-        }
+          // NEU: Herz für alle erreichten Taktik-Steps
+          if (tacticsGroup.current != null && step.rating <= tacticsGroup.current) {
+            item.classList.add("gf-step-reached");
+          }
+
+          gridT.appendChild(item);
+        });
+
+        journeyBox.appendChild(gridT);
+      }
 
         if (rapidMilestones && rapidMilestones.details) {
           const dotsWrapper = document.createElement("div");
@@ -1986,12 +2014,7 @@ adminBox.innerHTML = `
             dotsWrapper.appendChild(dot);
           });
 
-          journeyBox.appendChild(dotsWrapper);
 
-          const note = document.createElement("div");
-          note.className = "gf-note";
-          note.textContent = "Gefüllte Punkte = Meilensteine, die du schon angestupst hast.";
-          journeyBox.appendChild(note);
         }
 
         wrap.appendChild(journeyBox);

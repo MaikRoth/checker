@@ -13,24 +13,45 @@
 
   html,
   body {
+    margin: 0;
+    min-height: 100vh;
     background:
       radial-gradient(circle at top, rgba(15,23,42,0.9), #020617 55%, #000 100%),
-      repeating-linear-gradient(
-        45deg,
-        rgba(15,23,42,0.18),
-        rgba(15,23,42,0.18) 1px,
-        transparent 1px,
-        transparent 10px
-      );
+      /* Schachbrett-Pattern, sehr subtil */
+      linear-gradient(90deg, rgba(15,23,42,0.26) 50%, transparent 50%),
+      linear-gradient(0deg, rgba(15,23,42,0.26) 50%, transparent 50%);
+    background-size:
+      auto,
+      64px 64px,
+      64px 64px;
   }
 
   body {
-    margin: 0;
-    min-height: 100vh;
     padding: 2rem 1.25rem 3rem;
     display: flex;
     flex-direction: column;
     align-items: center;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* langsam bewegte Farbwolke im Hintergrund */
+  .bg-anim {
+    position: fixed;
+    inset: -20%;
+    z-index: -1;
+    background:
+      radial-gradient(circle at 0% 0%, #38bdf822, transparent 60%),
+      radial-gradient(circle at 100% 100%, #ec489922, transparent 60%);
+    mix-blend-mode: screen;
+    animation: bgFloat 24s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+
+  @keyframes bgFloat {
+    0%   { transform: translate3d(0, 0, 0) scale(1); }
+    50%  { transform: translate3d(-3%, 2%, 0) scale(1.05); }
+    100% { transform: translate3d(4%, -3%, 0) scale(1.08); }
   }
 
   main {
@@ -44,6 +65,7 @@
   header {
     text-align: center;
     margin-bottom: 1.6rem;
+    position: relative;
   }
 
   h1 {
@@ -72,6 +94,25 @@
     text-align: center;
     margin-top: 0.4rem;
     min-height: 1.2em;
+  }
+
+  /* Sound-Toggle oben rechts */
+  .sound-toggle {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    border-radius: 999px;
+    border: 1px solid #4b5563;
+    background: rgba(15,23,42,0.8);
+    color: #e5e7eb;
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+  }
+
+  .sound-toggle:hover {
+    border-color: #60a5fa;
   }
 
   .grid {
@@ -267,12 +308,13 @@
     color: #f9a8d4;
     border-color: rgba(236,72,153,0.75);
   }
-/* Nur bei der Freundin: erreichte Steps mit Herz markieren */
-.card-gf .step-item.gf-step-reached::after {
-  content: "💖";
-  margin-left: 0.2rem;
-  font-size: 0.7rem;
-}
+
+  /* Nur bei der Freundin: erreichte Steps mit Herz markieren */
+  .card-gf .step-item.gf-step-reached::after {
+    content: "💖";
+    margin-left: 0.2rem;
+    font-size: 0.7rem;
+  }
 
   .section-title {
     margin-top: 0.4rem;
@@ -564,6 +606,7 @@
     text-align: center;
     border: 1px solid;
     box-sizing: border-box;
+    position: relative;
   }
 
   .step-item span {
@@ -571,48 +614,51 @@
   }
 
   .step-paid {
-  background: rgba(34,197,94,0.12);
-  border-color: #14532d;
-  color: #86efac;
-  box-shadow: none;
-  position: relative;
-  opacity: 0.8;
-}
+    background: rgba(34,197,94,0.12);
+    border-color: #14532d;
+    color: #86efac;
+    box-shadow: none;
+    opacity: 0.8;
+  }
 
-.step-paid::after {
-  content: "✔";
-  position: absolute;
-  right: 4px;
-  bottom: 2px;
-  font-size: 0.6rem;
-  color: #22c55e;
-  opacity: 0.9;
-}
+  .step-paid::after {
+    content: "✔";
+    position: absolute;
+    right: 4px;
+    bottom: 2px;
+    font-size: 0.6rem;
+    color: #22c55e;
+    opacity: 0.9;
+  }
 
   .step-open {
-  background: rgba(59,130,246,0.25);
-  border-color: #3b82f6;
-  color: #dbeafe;
-  box-shadow: 0 0 14px rgba(59,130,246,0.45);
-  font-weight: 700;
-}
+    background: rgba(59,130,246,0.25);
+    border-color: #3b82f6;
+    color: #dbeafe;
+    box-shadow: 0 0 14px rgba(59,130,246,0.45);
+    font-weight: 700;
+  }
 
-
-.step-locked {
-  background: rgba(15,23,42,0.8);
-  border-color: #1f2937;
-  color: #6b7280;
-  opacity: 0.6;
-}
-
+  .step-locked {
+    background: rgba(15,23,42,0.8);
+    border-color: #1f2937;
+    color: #6b7280;
+    opacity: 0.6;
+  }
 
   .step-baseline {
-  background: transparent;
-  border-style: dashed;
-  border-color: #4b5563;
-  color: #9ca3af;
-  opacity: 0.6;
-}
+    background: transparent;
+    border-style: dashed;
+    border-color: #4b5563;
+    color: #9ca3af;
+    opacity: 0.6;
+  }
+
+  /* aktueller 100er-Block extra highlighten */
+  .step-item.current-step {
+    box-shadow: 0 0 22px rgba(250,204,21,0.8);
+    border-color: #facc15 !important;
+  }
 
   /* Admin / M41K View */
   .admin-summary {
@@ -640,18 +686,19 @@
   .admin-value {
     font-weight: 600;
   }
-  .pb-flag {
-  color: #22c55e;
-  font-weight: 600;
-  margin-left: 0.25rem;
-}
 
-.pb-gap {
-  color: #9ca3af;
-  font-weight: 400;
-  margin-left: 0.25rem;
-  font-size: 0.78em;
-}
+  .pb-flag {
+    color: #22c55e;
+    font-weight: 600;
+    margin-left: 0.25rem;
+  }
+
+  .pb-gap {
+    color: #9ca3af;
+    font-weight: 400;
+    margin-left: 0.25rem;
+    font-size: 0.78em;
+  }
 
   .admin-row-muted .admin-value {
     color: #9ca3af;
@@ -711,7 +758,7 @@
     flex-wrap: wrap;
   }
 
-    .gf-dot {
+  .gf-dot {
     width: 14px;
     height: 14px;
     border-radius: 999px;
@@ -723,10 +770,10 @@
     font-size: 0.7rem;
     color: #f9a8d4;
   }
-    .gf-dot-reached::after {
+
+  .gf-dot-reached::after {
     content: "💖";
   }
-
 
   .gf-dot-reached {
     background: radial-gradient(circle, #f9a8d4, #be185d);
@@ -737,8 +784,8 @@
     font-size: 0.7rem;
     color: #9ca3af;
     margin-top: 0.2rem;
-  } 
-  
+  }
+
   @media (max-width: 640px) {
     body {
       padding: 1.4rem 0.9rem 2.2rem;
@@ -757,12 +804,15 @@
 
 </head>
 <body>
+  <div class="bg-anim"></div>
+
   <main>
-    <header style="text-align:center;">
-      <h1>Chess Squad – Progress Board</h1>
+    <header>
+      <h1>♞ Chess Squad – Progress Board</h1>
       <p class="subtitle" id="subtitle">
         Lade Live-Daten von Chess.com…
       </p>
+      <button id="sound-toggle" class="sound-toggle" type="button">🔊</button>
     </header>
 
     <section class="grid" id="cards"></section>
@@ -772,12 +822,36 @@
     </footer>
   </main>
 
+  <!-- Sounds -->
+  <audio id="sfx-click"   src="click.mp3"   preload="auto"></audio>
+  <audio id="sfx-success" src="success.mp3" preload="auto"></audio>
+  <audio id="sfx-error"   src="error.mp3"   preload="auto"></audio>
+
   <script type="module">
     // Fehler-Handler, damit du sofort siehst, wenn JS crasht
     window.addEventListener("error", (event) => {
       const el = document.getElementById("subtitle");
       if (el) el.textContent = "Fehler: " + (event.message || "Unbekannter Fehler – siehe Konsole");
     });
+
+    // Sound-State
+    let soundEnabled = true;
+
+    const toggleBtn = document.getElementById("sound-toggle");
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", () => {
+        soundEnabled = !soundEnabled;
+        toggleBtn.textContent = soundEnabled ? "🔊" : "🔇";
+      });
+    }
+
+    function playSfx(id) {
+      if (!soundEnabled) return;
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.currentTime = 0;
+      el.play().catch(() => {});
+    }
 
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
     import {
@@ -945,34 +1019,32 @@
 
     // Steps, jetzt mit maxRating-Parameter (Rapid 2000, Taktik 3000)
     function buildStepDetails(baseline, current, stepsPaid, maxRating) {
-    const steps = [];
+      const steps = [];
 
-  // wie viele 100er-Steps über der Baseline sind insgesamt erreicht?
-  const delta = Math.max(0, current - baseline);
-  const stepsTotal = Math.floor(delta / 100);
+      const delta = Math.max(0, current - baseline);
+      const stepsTotal = Math.floor(delta / 100);
 
-  // bis zu welcher Elo ist alles bezahlt / erreicht?
-  const highestPaidRating = baseline + stepsPaid * 100;
-  const highestStepRating = baseline + stepsTotal * 100;
+      const highestPaidRating = baseline + stepsPaid * 100;
+      const highestStepRating = baseline + stepsTotal * 100;
 
-  for (let rating = 100; rating <= maxRating; rating += 100) {
-    let status = "locked";
+      for (let rating = 100; rating <= maxRating; rating += 100) {
+        let status = "locked";
 
-    if (rating <= baseline) {
-      status = "baseline";
-    } else if (rating <= highestPaidRating) {
-      status = "paid";
-    } else if (rating <= highestStepRating && rating <= current) {
-      status = "open";
-    } else {
-      status = "locked";
+        if (rating <= baseline) {
+          status = "baseline";
+        } else if (rating <= highestPaidRating) {
+          status = "paid";
+        } else if (rating <= highestStepRating && rating <= current) {
+          status = "open";
+        } else {
+          status = "locked";
+        }
+
+        steps.push({ rating, status });
+      }
+
+      return steps;
     }
-
-    steps.push({ rating, status });
-  }
-
-  return steps;
-}
 
     function computeRewardState(username, tacticsRating, rapidRating, rewardDoc) {
       const isChef = username === CHEF_USERNAME;
@@ -1005,18 +1077,17 @@
       const rapidStepsPaidEuro   = rapidStepsPaid * 10;
       const rapidStepsUnpaidEuro = rapidStepsNew * 10;
 
-      // hier: verschiedene Obergrenzen
       const tacticsStepDetails = buildStepDetails(
         baselineT,
         tNow,
-        tacticsStepsPaid,      // vorher tacticsStepsClaimed
+        tacticsStepsPaid,
         TACTICS_MAX_STEP_RATING
       );
 
       const rapidStepDetails = buildStepDetails(
         baselineR,
         rNow,
-        rapidStepsPaid,        // vorher rapidStepsClaimed
+        rapidStepsPaid,
         RAPID_MAX_STEP_RATING
       );
 
@@ -1422,151 +1493,143 @@
     }
 
     function buildAchievements(stats, rewardState, weeklyState) {
-  const { totalGames, modes, tactics } = stats;
-  const { total } = rewardState;
-  const ach = [];
+      const { totalGames, modes, tactics } = stats;
+      const { total } = rewardState;
+      const ach = [];
 
-  // Helper
-  const add = (label, style, tooltip) => {
-    ach.push({ label, style, tooltip });
-  };
+      const add = (label, style, tooltip) => {
+        ach.push({ label, style, tooltip });
+      };
 
-  // --- Volume / Grind ---
-  if (totalGames >= 20) {
-    add("📚 Opening Book", "bronze",
-        "Mindestens 20 Partien gespielt – Warm-up abgeschlossen.");
-  }
-  if (totalGames >= 50) {
-    add("🎯 Warmgelaufen", "bronze",
-        "50+ Games – du bist im Flow.");
-  }
-  if (totalGames >= 100) {
-    add("🏃 Grinder", "silver",
-        "100+ Partien – richtiger Grinder.");
-  }
-  if (totalGames >= 300) {
-    add("🧱 Wall", "silver",
-        "300+ Partien – stabile Erfahrungs-Mauer.");
-  }
-  if (totalGames >= 1000) {
-    add("♾ Marathon", "gold",
-        "1.000+ gespielte Partien – Langstrecken-Grind.");
-  }
+      if (totalGames >= 20) {
+        add("📚 Opening Book", "bronze",
+            "Mindestens 20 Partien gespielt – Warm-up abgeschlossen.");
+      }
+      if (totalGames >= 50) {
+        add("🎯 Warmgelaufen", "bronze",
+            "50+ Games – du bist im Flow.");
+      }
+      if (totalGames >= 100) {
+        add("🏃 Grinder", "silver",
+            "100+ Partien – richtiger Grinder.");
+      }
+      if (totalGames >= 300) {
+        add("🧱 Wall", "silver",
+            "300+ Partien – stabile Erfahrungs-Mauer.");
+      }
+      if (totalGames >= 1000) {
+        add("♾ Marathon", "gold",
+            "1.000+ gespielte Partien – Langstrecken-Grind.");
+      }
 
-  // --- Modus-Performance / Winrate ---
-  const modesWithGames = modes.filter(m => m.games >= 20 && m.winrate != null);
+      const modesWithGames = modes.filter(m => m.games >= 20 && m.winrate != null);
 
-  if (modesWithGames.length) {
-    modesWithGames.sort((a, b) => b.winrate - a.winrate);
-    const best = modesWithGames[0];
+      if (modesWithGames.length) {
+        modesWithGames.sort((a, b) => b.winrate - a.winrate);
+        const best = modesWithGames[0];
 
-    if (best.winrate >= 60) {
-      add(
-        `🔥 ${best.label}`,
-        "gold",
-        `Bester Modus nach Winrate (${best.winrate}% WR bei 20+ Games).`
-      );
-    }
-    if (best.winrate >= 65 && best.games >= 50) {
-      add(
-        "🌋 Peak Mode",
-        "gold",
-        "65%+ Winrate in einem Modus mit mindestens 50 Partien."
-      );
-    }
-  }
+        if (best.winrate >= 60) {
+          add(
+            `🔥 ${best.label}`,
+            "gold",
+            `Bester Modus nach Winrate (${best.winrate}% WR bei 20+ Games).`
+          );
+        }
+        if (best.winrate >= 65 && best.games >= 50) {
+          add(
+            "🌋 Peak Mode",
+            "gold",
+            "65%+ Winrate in einem Modus mit mindestens 50 Partien."
+          );
+        }
+      }
 
-  // meistgespielter Modus für „Tilt Control“
-  if (modes.length) {
-    const mainMode = modes.reduce((a, b) => (a.games > b.games ? a : b));
-    if (mainMode && mainMode.best != null && mainMode.current != null) {
-      const gap = mainMode.best - mainMode.current;
-      if (gap <= 30) {
+      if (modes.length) {
+        const mainMode = modes.reduce((a, b) => (a.games > b.games ? a : b));
+        if (mainMode && mainMode.best != null && mainMode.current != null) {
+          const gap = mainMode.best - mainMode.current;
+          if (gap <= 30) {
+            add(
+              "🧊 Tilt Control",
+              "silver",
+              "Max. 30 Elo unter PB im Main-Modus – kaum Tilt."
+            );
+          }
+        }
+      }
+
+      const rapidMode = modes.find(m => m.key === "chess_rapid");
+      const rapidElo = rapidMode?.current ?? null;
+      const tacticsElo = tactics?.current ?? null;
+
+      if ((rapidElo != null && rapidElo >= 1500) || (tacticsElo != null && tacticsElo >= 1500)) {
         add(
-          "🧊 Tilt Control",
+          "🚀 Elo Climber",
           "silver",
-          "Max. 30 Elo unter PB im Main-Modus – kaum Tilt."
+          "1500+ Rapid- oder Taktik-Elo erreicht."
         );
       }
+
+      if (tacticsElo != null && tacticsElo >= 2200) {
+        add(
+          "🧠 Tactics",
+          "gold",
+          "Taktik-Rating 2200+ – Big-Brain-Badge."
+        );
+      }
+
+      if (total.raw >= 50) {
+        add(
+          "💶 Rewards",
+          "silver",
+          "Insgesamt 50€ oder mehr erspielt (Steps + Meilensteine)."
+        );
+      }
+
+      if (total.paid >= 10) {
+        add(
+          "💸 First Cashout",
+          "bronze",
+          "Zum ersten Mal Geld aus dem System ausgezahlt bekommen."
+        );
+      }
+      if (total.paid >= 100) {
+        add(
+          "🏦 High Roller",
+          "silver",
+          "100€+ bereits ausgezahlt – High Roller Status."
+        );
+      }
+      if (total.unpaid >= 100) {
+        add(
+          "💰 Treasure Hunter",
+          "gold",
+          "100€+ offen – ungehobener Reward-Schatz."
+        );
+      }
+
+      if (weeklyState && weeklyState.weeklyStats) {
+        const { weeklyStats } = weeklyState;
+        const { totalGamesWeek, activeDaysCount, timeoutsWeek } = weeklyStats;
+
+        if (totalGamesWeek >= 10 && timeoutsWeek === 0) {
+          add(
+            "🧘 No Tilt Week",
+            "silver",
+            "Mindestens 10 Games in einer Woche ohne Timeout."
+          );
+        }
+        if (activeDaysCount >= 6) {
+          add(
+            "📆 Daily Grinder",
+            "silver",
+            "An 6+ Tagen in derselben Woche aktiv gespielt."
+          );
+        }
+      }
+
+      return ach;
     }
-  }
-
-  // --- Elo / Taktik ---
-  const rapidMode = modes.find(m => m.key === "chess_rapid");
-  const rapidElo = rapidMode?.current ?? null;
-  const tacticsElo = tactics?.current ?? null;
-
-  if ((rapidElo != null && rapidElo >= 1500) || (tacticsElo != null && tacticsElo >= 1500)) {
-    add(
-      "🚀 Elo Climber",
-      "silver",
-      "1500+ Rapid- oder Taktik-Elo erreicht."
-    );
-  }
-
-  if (tacticsElo != null && tacticsElo >= 2200) {
-    add(
-      "🧠 Tactics",
-      "gold",
-      "Taktik-Rating 2200+ – Big-Brain-Badge."
-    );
-  }
-
-  // --- Rewards / Geld ---
-  if (total.raw >= 50) {
-    add(
-      "💶 Rewards",
-      "silver",
-      "Insgesamt 50€ oder mehr erspielt (Steps + Meilensteine)."
-    );
-  }
-
-  if (total.paid >= 10) {
-    add(
-      "💸 First Cashout",
-      "bronze",
-      "Zum ersten Mal Geld aus dem System ausgezahlt bekommen."
-    );
-  }
-  if (total.paid >= 100) {
-    add(
-      "🏦 High Roller",
-      "silver",
-      "100€+ bereits ausgezahlt – High Roller Status."
-    );
-  }
-  if (total.unpaid >= 100) {
-    add(
-      "💰 Treasure Hunter",
-      "gold",
-      "100€+ offen – ungehobener Reward-Schatz."
-    );
-  }
-
-  // --- Weekly / Disziplin ---
-  if (weeklyState && weeklyState.weeklyStats) {
-    const { weeklyStats } = weeklyState;
-    const { totalGamesWeek, activeDaysCount, timeoutsWeek } = weeklyStats;
-
-    if (totalGamesWeek >= 10 && timeoutsWeek === 0) {
-      add(
-        "🧘 No Tilt Week",
-        "silver",
-        "Mindestens 10 Games in einer Woche ohne Timeout."
-      );
-    }
-    if (activeDaysCount >= 6) {
-      add(
-        "📆 Daily Grinder",
-        "silver",
-        "An 6+ Tagen in derselben Woche aktiv gespielt."
-      );
-    }
-  }
-
-  return ach;
-}
-
 
     function renderPlayerCard(stats, rewardState, weeklyState) {
       const cards = document.getElementById("cards");
@@ -1627,91 +1690,86 @@
         const adminBox = document.createElement("div");
         adminBox.className = "admin-summary";
 
-      const rapidMode = stats.modes.find(m => m.key === "chess_rapid");
-const blitzMode = stats.modes.find(m => m.key === "chess_blitz");
-const bulletMode = stats.modes.find(m => m.key === "chess_bullet");
-const dailyMode = stats.modes.find(m => m.key === "chess_daily");
+        const rapidMode = stats.modes.find(m => m.key === "chess_rapid");
+        const blitzMode = stats.modes.find(m => m.key === "chess_blitz");
+        const bulletMode = stats.modes.find(m => m.key === "chess_bullet");
+        const dailyMode = stats.modes.find(m => m.key === "chess_daily");
 
-const tacticsRating = stats.tactics?.current ?? null;
-const tacticsHighest = stats.tactics?.highest ?? null;
+        const tacticsRating = stats.tactics?.current ?? null;
+        const tacticsHighest = stats.tactics?.highest ?? null;
 
-// Helper: zeigt PB oder Distanz zum PB an
-const fmtMode = (mode) => {
-  if (!mode || mode.current == null) return "–";
+        const fmtMode = (mode) => {
+          if (!mode || mode.current == null) return "–";
 
-  const cur = mode.current;
-  const pb = mode.best ?? mode.current;
+          const cur = mode.current;
+          const pb = mode.best ?? mode.current;
 
-  // PB gleich → highlight "PB"
-  if (cur === pb) {
-    return `
-      <span class="pb-flag">PB</span>
-      <span>${cur}</span>
-      <span class="pb-gap">(PB ${pb})</span>
-    `;
-  }
+          if (cur === pb) {
+            return `
+              <span class="pb-flag">PB</span>
+              <span>${cur}</span>
+              <span class="pb-gap">(PB ${pb})</span>
+            `;
+          }
 
-  // Differenz berechnen
-  const diff = cur - pb;
-  const sign = diff >= 0 ? "+" : "";
-  return `
-    <span class="pb-gap">${sign}${diff}</span>
-    <span>${cur}</span>
-    <span class="pb-gap">(PB ${pb})</span>
-  `;
-};
+          const diff = cur - pb;
+          const sign = diff >= 0 ? "+" : "";
+          return `
+            <span class="pb-gap">${sign}${diff}</span>
+            <span>${cur}</span>
+            <span class="pb-gap">(PB ${pb})</span>
+          `;
+        };
 
-const fmtTactics = () => {
-  if (tacticsRating == null) return "–";
+        const fmtTactics = () => {
+          if (tacticsRating == null) return "–";
 
-  const cur = tacticsRating;
-  const pb = tacticsHighest ?? cur;
+          const cur = tacticsRating;
+          const pb = tacticsHighest ?? cur;
 
-  if (cur === pb) {
-    return `
-      <span class="pb-flag">PB</span>
-      <span>${cur}</span>
-      <span class="pb-gap">(PB ${pb})</span>
-    `;
-  }
+          if (cur === pb) {
+            return `
+              <span class="pb-flag">PB</span>
+              <span>${cur}</span>
+              <span class="pb-gap">(PB ${pb})</span>
+            `;
+          }
 
-  const diff = cur - pb;
-  const sign = diff >= 0 ? "+" : "";
-  return `
-    <span class="pb-gap">${sign}${diff}</span>
-    <span>${cur}</span>
-    <span class="pb-gap">(PB ${pb})</span>
-  `;
-};
+          const diff = cur - pb;
+          const sign = diff >= 0 ? "+" : "";
+          return `
+            <span class="pb-gap">${sign}${diff}</span>
+            <span>${cur}</span>
+            <span class="pb-gap">(PB ${pb})</span>
+          `;
+        };
 
-
-adminBox.innerHTML = `
-  <div class="admin-row">
-    <div class="admin-label">Games gesamt</div>
-    <div class="admin-value">${stats.totalGames}</div>
-  </div>
-  <div class="admin-row">
-    <div class="admin-label">Rapid Elo</div>
-    <div class="admin-value">${fmtMode(rapidMode)}</div>
-  </div>
-  <div class="admin-row">
-    <div class="admin-label">Blitz Elo</div>
-    <div class="admin-value">${fmtMode(blitzMode)}</div>
-  </div>
-  <div class="admin-row">
-    <div class="admin-label">Bullet Elo</div>
-    <div class="admin-value">${fmtMode(bulletMode)}</div>
-  </div>
-  <div class="admin-row">
-    <div class="admin-label">Daily Elo</div>
-    <div class="admin-value">${fmtMode(dailyMode)}</div>
-  </div>
-  <div class="admin-row">
-    <div class="admin-label">Taktik Elo</div>
-    <div class="admin-value">${fmtTactics()}</div>
-  </div>
-`;
-
+        adminBox.innerHTML = `
+          <div class="admin-row">
+            <div class="admin-label">Games gesamt</div>
+            <div class="admin-value">${stats.totalGames}</div>
+          </div>
+          <div class="admin-row">
+            <div class="admin-label">Rapid Elo</div>
+            <div class="admin-value">${fmtMode(rapidMode)}</div>
+          </div>
+          <div class="admin-row">
+            <div class="admin-label">Blitz Elo</div>
+            <div class="admin-value">${fmtMode(blitzMode)}</div>
+          </div>
+          <div class="admin-row">
+            <div class="admin-label">Bullet Elo</div>
+            <div class="admin-value">${fmtMode(bulletMode)}</div>
+          </div>
+          <div class="admin-row">
+            <div class="admin-label">Daily Elo</div>
+            <div class="admin-value">${fmtMode(dailyMode)}</div>
+          </div>
+          <div class="admin-row">
+            <div class="admin-label">Taktik Elo</div>
+            <div class="admin-value">${fmtTactics()}</div>
+          </div>
+        `;
 
         if (weeklyState && weeklyState.weeklyStats) {
           const { weeklyStats, weekKey } = weeklyState;
@@ -1745,12 +1803,11 @@ adminBox.innerHTML = `
         if (eloSteps) {
           const stepsTitle = document.createElement("div");
           stepsTitle.className = "section-title";
-          stepsTitle.textContent = "Elo Steps – Own Grind";
+          stepsTitle.textContent = "Elo Steps";
           wrap.appendChild(stepsTitle);
 
           const stepsSubtitle = document.createElement("div");
           stepsSubtitle.className = "section-subtitle";
-          stepsSubtitle.textContent = "100er Steps bis 2000 Rapid / 3000 Taktik – nur Motivation, kein Geld.";
           wrap.appendChild(stepsSubtitle);
 
           const stepsBox = document.createElement("div");
@@ -1780,9 +1837,8 @@ adminBox.innerHTML = `
 
             const rightInfo = document.createElement("div");
             rightInfo.innerHTML = `
-            <span class="step-current">${group.current ?? "–"} Elo</span>
-          `;
-
+              <span class="step-current">${group.current ?? "–"} Elo</span>
+            `;
 
             headerSteps.appendChild(leftLabel);
             headerSteps.appendChild(rightInfo);
@@ -1800,6 +1856,13 @@ adminBox.innerHTML = `
               item.className = `step-item ${cls}`;
               item.title = `${cfg.label}: ${step.rating} Elo`;
               item.innerHTML = `<span>${step.rating}</span>`;
+
+              if (group.current != null &&
+                  step.rating <= group.current &&
+                  step.rating > group.current - 100) {
+                item.classList.add("current-step");
+              }
+
               grid.appendChild(item);
             });
 
@@ -1810,13 +1873,11 @@ adminBox.innerHTML = `
           stepsBox.appendChild(stepContainer);
           wrap.appendChild(stepsBox);
         }
-        
 
-  card.appendChild(wrap);
-  cards.appendChild(card);
-  return;
-}
-
+        card.appendChild(wrap);
+        cards.appendChild(card);
+        return;
+      }
 
       // Gemeinsamer Teil für ERR_Daemon + Kathi (Ratings + Badges)
       const modesTitle = document.createElement("div");
@@ -1916,7 +1977,6 @@ adminBox.innerHTML = `
           }
           achRow.appendChild(span);
         });
-
       }
       wrap.appendChild(achRow);
 
@@ -1949,58 +2009,67 @@ adminBox.innerHTML = `
           const grid = document.createElement("div");
           grid.className = "step-grid";
 
-            rapidGroup.details.forEach(step => {
-              const item = document.createElement("div");
-              let cls = "step-locked";
-              if (step.status === "paid" || step.status === "open" || step.status === "baseline") {
-                cls = "step-open";
-              }
-              item.className = `step-item ${cls}`;
-              item.innerHTML = `<span>${step.rating}</span>`;
+          rapidGroup.details.forEach(step => {
+            const item = document.createElement("div");
+            let cls = "step-locked";
+            if (step.status === "paid" || step.status === "open" || step.status === "baseline") {
+              cls = "step-open";
+            }
+            item.className = `step-item ${cls}`;
+            item.innerHTML = `<span>${step.rating}</span>`;
 
-              // NEU: alle erreichten Steps (<= aktueller Elo) bekommen ein Herz
-              if (rapidGroup.current != null && step.rating <= rapidGroup.current) {
-                item.classList.add("gf-step-reached");
-              }
+            if (rapidGroup.current != null && step.rating <= rapidGroup.current) {
+              item.classList.add("gf-step-reached");
+            }
 
-              grid.appendChild(item);
-            });
+            if (rapidGroup.current != null &&
+                step.rating <= rapidGroup.current &&
+                step.rating > rapidGroup.current - 100) {
+              item.classList.add("current-step");
+            }
 
+            grid.appendChild(item);
+          });
 
           journeyBox.appendChild(grid);
         }
 
-       if (tacticsGroup) {
-        const headerT = document.createElement("div");
-        headerT.className = "gf-journey-header";
-        headerT.innerHTML = `
-          <div class="gf-journey-label">🧠 Taktik · <span>${tacticsGroup.current ?? "–"} Elo</span></div>
-          <div class="gf-tagline">Brain Gains</div>
-        `;
-        journeyBox.appendChild(headerT);
+        if (tacticsGroup) {
+          const headerT = document.createElement("div");
+          headerT.className = "gf-journey-header";
+          headerT.innerHTML = `
+            <div class="gf-journey-label">🧠 Taktik · <span>${tacticsGroup.current ?? "–"} Elo</span></div>
+            <div class="gf-tagline">Brain Gains</div>
+          `;
+          journeyBox.appendChild(headerT);
 
-        const gridT = document.createElement("div");
-        gridT.className = "step-grid";
+          const gridT = document.createElement("div");
+          gridT.className = "step-grid";
 
-        tacticsGroup.details.forEach(step => {
-          const item = document.createElement("div");
-          let cls = "step-locked";
-          if (step.status === "paid" || step.status === "open" || step.status === "baseline") {
-            cls = "step-open";
-          }
-          item.className = `step-item ${cls}`;
-          item.innerHTML = `<span>${step.rating}</span>`;
+          tacticsGroup.details.forEach(step => {
+            const item = document.createElement("div");
+            let cls = "step-locked";
+            if (step.status === "paid" || step.status === "open" || step.status === "baseline") {
+              cls = "step-open";
+            }
+            item.className = `step-item ${cls}`;
+            item.innerHTML = `<span>${step.rating}</span>`;
 
-          // NEU: Herz für alle erreichten Taktik-Steps
-          if (tacticsGroup.current != null && step.rating <= tacticsGroup.current) {
-            item.classList.add("gf-step-reached");
-          }
+            if (tacticsGroup.current != null && step.rating <= tacticsGroup.current) {
+              item.classList.add("gf-step-reached");
+            }
 
-          gridT.appendChild(item);
-        });
+            if (tacticsGroup.current != null &&
+                step.rating <= tacticsGroup.current &&
+                step.rating > tacticsGroup.current - 100) {
+              item.classList.add("current-step");
+            }
 
-        journeyBox.appendChild(gridT);
-      }
+            gridT.appendChild(item);
+          });
+
+          journeyBox.appendChild(gridT);
+        }
 
         if (rapidMilestones && rapidMilestones.details) {
           const dotsWrapper = document.createElement("div");
@@ -2014,7 +2083,7 @@ adminBox.innerHTML = `
             dotsWrapper.appendChild(dot);
           });
 
-
+          journeyBox.appendChild(dotsWrapper);
         }
 
         wrap.appendChild(journeyBox);
@@ -2136,6 +2205,13 @@ adminBox.innerHTML = `
             item.className = `step-item ${cls}`;
             item.title = `${cfg.label}: ${step.rating} Elo`;
             item.innerHTML = `<span>${step.rating}</span>`;
+
+            if (group.current != null &&
+                step.rating <= group.current &&
+                step.rating > group.current - 100) {
+              item.classList.add("current-step");
+            }
+
             grid.appendChild(item);
           });
 
@@ -2198,9 +2274,21 @@ adminBox.innerHTML = `
         btn.className = "btn";
         btn.textContent = `Claim (${total.unpaid} €)`;
         btn.addEventListener("click", async () => {
+          playSfx("sfx-click");
           btn.disabled = true;
-          await createLifetimeClaim(stats.username, rewardState);
-          location.reload();
+          const oldText = btn.textContent;
+          btn.textContent = "Wird gespeichert…";
+          try {
+            await createLifetimeClaim(stats.username, rewardState);
+            playSfx("sfx-success");
+            btn.textContent = "Gespeichert ✓";
+            setTimeout(() => location.reload(), 600);
+          } catch (e) {
+            console.error(e);
+            playSfx("sfx-error");
+            btn.textContent = oldText;
+            btn.disabled = false;
+          }
         });
         rewardBox.appendChild(btn);
       } else if (activePending) {
@@ -2208,9 +2296,21 @@ adminBox.innerHTML = `
         btnPaid.className = "btn";
         btnPaid.textContent = `Ausgezahlt (${activePending.amount} €)`;
         btnPaid.addEventListener("click", async () => {
+          playSfx("sfx-click");
           btnPaid.disabled = true;
-          await markLifetimeClaimPaid(stats.username, rewardState);
-          location.reload();
+          const oldText = btnPaid.textContent;
+          btnPaid.textContent = "Wird gespeichert…";
+          try {
+            await markLifetimeClaimPaid(stats.username, rewardState);
+            playSfx("sfx-success");
+            btnPaid.textContent = "Gespeichert ✓";
+            setTimeout(() => location.reload(), 600);
+          } catch (e) {
+            console.error(e);
+            playSfx("sfx-error");
+            btnPaid.textContent = oldText;
+            btnPaid.disabled = false;
+          }
         });
         rewardBox.appendChild(btnPaid);
 
@@ -2218,9 +2318,21 @@ adminBox.innerHTML = `
         btnCancel.className = "btn btn-danger";
         btnCancel.textContent = "Reset";
         btnCancel.addEventListener("click", async () => {
+          playSfx("sfx-click");
           btnCancel.disabled = true;
-          await resetLifetimeClaim(stats.username);
-          location.reload();
+          const oldText = btnCancel.textContent;
+          btnCancel.textContent = "Reset…";
+          try {
+            await resetLifetimeClaim(stats.username);
+            playSfx("sfx-success");
+            btnCancel.textContent = "OK ✓";
+            setTimeout(() => location.reload(), 600);
+          } catch (e) {
+            console.error(e);
+            playSfx("sfx-error");
+            btnCancel.textContent = oldText;
+            btnCancel.disabled = false;
+          }
         });
         rewardBox.appendChild(btnCancel);
       }
@@ -2303,9 +2415,21 @@ adminBox.innerHTML = `
           btn.className = "btn";
           btn.textContent = `Claim (${claimPlan.amount} €)`;
           btn.addEventListener("click", async () => {
+            playSfx("sfx-click");
             btn.disabled = true;
-            await createWeeklyClaim(stats.username, weeklyState);
-            location.reload();
+            const oldText = btn.textContent;
+            btn.textContent = "Wird gespeichert…";
+            try {
+              await createWeeklyClaim(stats.username, weeklyState);
+              playSfx("sfx-success");
+              btn.textContent = "Gespeichert ✓";
+              setTimeout(() => location.reload(), 600);
+            } catch (e) {
+              console.error(e);
+              playSfx("sfx-error");
+              btn.textContent = oldText;
+              btn.disabled = false;
+            }
           });
           weeklyBox.appendChild(btn);
         } else if (activePendingW) {
@@ -2313,9 +2437,21 @@ adminBox.innerHTML = `
           btnPaid.className = "btn";
           btnPaid.textContent = `Ausgezahlt (${activePendingW.amount} €)`;
           btnPaid.addEventListener("click", async () => {
+            playSfx("sfx-click");
             btnPaid.disabled = true;
-            await markWeeklyClaimPaid(stats.username, weeklyState);
-            location.reload();
+            const oldText = btnPaid.textContent;
+            btnPaid.textContent = "Wird gespeichert…";
+            try {
+              await markWeeklyClaimPaid(stats.username, weeklyState);
+              playSfx("sfx-success");
+              btnPaid.textContent = "Gespeichert ✓";
+              setTimeout(() => location.reload(), 600);
+            } catch (e) {
+              console.error(e);
+              playSfx("sfx-error");
+              btnPaid.textContent = oldText;
+              btnPaid.disabled = false;
+            }
           });
           weeklyBox.appendChild(btnPaid);
 
@@ -2323,9 +2459,21 @@ adminBox.innerHTML = `
           btnCancel.className = "btn btn-danger";
           btnCancel.textContent = "Reset";
           btnCancel.addEventListener("click", async () => {
+            playSfx("sfx-click");
             btnCancel.disabled = true;
-            await resetWeeklyClaim(stats.username, weeklyState);
-            location.reload();
+            const oldText = btnCancel.textContent;
+            btnCancel.textContent = "Reset…";
+            try {
+              await resetWeeklyClaim(stats.username, weeklyState);
+              playSfx("sfx-success");
+              btnCancel.textContent = "OK ✓";
+              setTimeout(() => location.reload(), 600);
+            } catch (e) {
+              console.error(e);
+              playSfx("sfx-error");
+              btnCancel.textContent = oldText;
+              btnCancel.disabled = false;
+            }
           });
           weeklyBox.appendChild(btnCancel);
         }

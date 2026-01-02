@@ -565,32 +565,48 @@
   }
 
   .step-paid {
-    background: rgba(34,197,94,0.2);
-    border-color: #22c55e;
-    color: #bbf7d0;
-    box-shadow: 0 0 12px rgba(34,197,94,0.45);
-  }
+  background: rgba(34,197,94,0.12);
+  border-color: #14532d;
+  color: #86efac;
+  box-shadow: none;
+  position: relative;
+  opacity: 0.8;
+}
+
+.step-paid::after {
+  content: "✔";
+  position: absolute;
+  right: 4px;
+  bottom: 2px;
+  font-size: 0.6rem;
+  color: #22c55e;
+  opacity: 0.9;
+}
 
   .step-open {
-    background: rgba(59,130,246,0.22);
-    border-color: #3b82f6;
-    color: #bfdbfe;
-    box-shadow: 0 0 12px rgba(59,130,246,0.4);
-  }
+  background: rgba(59,130,246,0.25);
+  border-color: #3b82f6;
+  color: #dbeafe;
+  box-shadow: 0 0 14px rgba(59,130,246,0.45);
+  font-weight: 700;
+}
 
-  .step-locked {
-    background: rgba(15,23,42,0.95);
-    border-color: #1f2937;
-    color: #6b7280;
-  }
+
+.step-locked {
+  background: rgba(15,23,42,0.8);
+  border-color: #1f2937;
+  color: #6b7280;
+  opacity: 0.6;
+}
+
 
   .step-baseline {
-    background: rgba(15,23,42,0.9);
-    border-style: dashed;
-    border-color: #374151;
-    color: #4b5563;
-    opacity: 0.7;
-  }
+  background: transparent;
+  border-style: dashed;
+  border-color: #4b5563;
+  color: #9ca3af;
+  opacity: 0.6;
+}
 
   /* Admin / M41K View */
   .admin-summary {
@@ -901,37 +917,35 @@
     }
 
     // Steps, jetzt mit maxRating-Parameter (Rapid 2000, Taktik 3000)
-    function buildStepDetails(baseline, current, stepsClaimed, maxRating) {
-      const steps = [];
+    function buildStepDetails(baseline, current, stepsPaid, maxRating) {
+    const steps = [];
 
-      for (let rating = 100; rating <= maxRating; rating += 100) {
-        let status = "locked";
-        let stepIndex = null;
+  // wie viele 100er-Steps über der Baseline sind insgesamt erreicht?
+  const delta = Math.max(0, current - baseline);
+  const stepsTotal = Math.floor(delta / 100);
 
-        if (rating <= baseline) {
-          status = "baseline";
-        } else {
-          stepIndex = Math.floor((rating - baseline) / 100);
-          if (stepIndex <= 0) {
-            status = current >= rating ? "open" : "locked";
-          } else {
-            if (current >= rating) {
-              if (stepIndex <= stepsClaimed) {
-                status = "paid";
-              } else {
-                status = "open";
-              }
-            } else {
-              status = "locked";
-            }
-          }
-        }
+  // bis zu welcher Elo ist alles bezahlt / erreicht?
+  const highestPaidRating = baseline + stepsPaid * 100;
+  const highestStepRating = baseline + stepsTotal * 100;
 
-        steps.push({ rating, status });
-      }
+  for (let rating = 100; rating <= maxRating; rating += 100) {
+    let status = "locked";
 
-      return steps;
+    if (rating <= baseline) {
+      status = "baseline";
+    } else if (rating <= highestPaidRating) {
+      status = "paid";
+    } else if (rating <= highestStepRating && rating <= current) {
+      status = "open";
+    } else {
+      status = "locked";
     }
+
+    steps.push({ rating, status });
+  }
+
+  return steps;
+}
 
     function computeRewardState(username, tacticsRating, rapidRating, rewardDoc) {
       const isChef = username === CHEF_USERNAME;
@@ -965,8 +979,19 @@
       const rapidStepsUnpaidEuro = rapidStepsNew * 10;
 
       // hier: verschiedene Obergrenzen
-      const tacticsStepDetails = buildStepDetails(baselineT, tNow, tacticsStepsClaimed, TACTICS_MAX_STEP_RATING);
-      const rapidStepDetails   = buildStepDetails(baselineR, rNow, rapidStepsClaimed, RAPID_MAX_STEP_RATING);
+      const tacticsStepDetails = buildStepDetails(
+        baselineT,
+        tNow,
+        tacticsStepsPaid,      // vorher tacticsStepsClaimed
+        TACTICS_MAX_STEP_RATING
+      );
+
+      const rapidStepDetails = buildStepDetails(
+        baselineR,
+        rNow,
+        rapidStepsPaid,        // vorher rapidStepsClaimed
+        RAPID_MAX_STEP_RATING
+      );
 
       const eloSteps = {
         tactics: {

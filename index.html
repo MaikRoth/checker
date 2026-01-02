@@ -362,6 +362,79 @@
     a {
       color: #60a5fa;
     }
+
+    /* Elo-Step-Ansicht */
+    .step-sections {
+      margin-top: 0.4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .step-section {
+      font-size: 0.74rem;
+    }
+
+    .step-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.18rem;
+    }
+
+    .step-label {
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+
+    .step-current {
+      font-weight: 600;
+      color: #facc15;
+    }
+
+    .step-summary {
+      font-size: 0.7rem;
+      color: #9ca3af;
+    }
+
+    .step-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      margin-top: 0.15rem;
+    }
+
+    .step-item {
+      min-width: 46px;
+      padding: 0.15rem 0.3rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      text-align: center;
+      border: 1px solid;
+      box-sizing: border-box;
+    }
+
+    .step-item span {
+      display: inline-block;
+    }
+
+    .step-paid {
+      background: rgba(34,197,94,0.18);
+      border-color: #22c55e;
+      color: #bbf7d0;
+    }
+
+    .step-open {
+      background: rgba(59,130,246,0.18);
+      border-color: #3b82f6;
+      color: #bfdbfe;
+    }
+
+    .step-locked {
+      background: rgba(15,23,42,0.9);
+      border-color: #1f2937;
+      color: #6b7280;
+    }
   </style>
 </head>
 <body>
@@ -433,6 +506,8 @@
       { id: "days7",    label: "7/7 Tage aktiv", amount: 5 },
       { id: "noTimeouts", label: "Kein Timeout", amount: 2 }
     ];
+
+    const STEP_VIEW_COUNT = 15; // wie viele 100-Elo-Steps pro Modus anzeigen
 
     async function fetchJson(url) {
       const res = await fetch(url);
@@ -541,6 +616,29 @@
       return snap.data();
     }
 
+    function buildStepDetails(baseline, current, stepsClaimed, maxSteps = STEP_VIEW_COUNT) {
+      const steps = [];
+      for (let i = 1; i <= maxSteps; i++) {
+        const rating = baseline + i * 100;
+        let status = "locked"; // noch nicht erreicht
+
+        if (current >= rating) {
+          if (i <= stepsClaimed) {
+            status = "paid";   // erreicht & bezahlt
+          } else {
+            status = "open";   // erreicht, aber noch offen
+          }
+        }
+
+        steps.push({
+          index: i,
+          rating,
+          status
+        });
+      }
+      return steps;
+    }
+
     function computeRewardState(username, tacticsRating, rapidRating, rewardDoc) {
       const isChef = username === CHEF_USERNAME;
       const baselineT = rewardDoc.baselineTactics ?? 0;
@@ -549,6 +647,7 @@
       const tNow = tacticsRating ?? 0;
       const rNow = rapidRating   ?? 0;
 
+      // --- Taktik-Delta & Steps ---
       const deltaT = Math.max(0, tNow - baselineT);
       const tacticsStepsTotal = Math.floor(deltaT / 100);
       const tacticsRewardRaw  = tacticsStepsTotal * 10;
@@ -562,6 +661,7 @@
       const nextTacticsTarget = baselineT + (tacticsStepsTotal + 1) * 100;
       const tacticsToNext     = Math.max(0, nextTacticsTarget - tNow);
 
+      // --- Rapid-Delta & Steps ---
       const deltaR = Math.max(0, rNow - baselineR);
       const rapidStepsTotal = Math.floor(deltaR / 100);
       const rapidStepsRewardRaw = rapidStepsTotal * 10;
@@ -572,10 +672,47 @@
       const rapidStepsPaidEuro   = rapidStepsPaid * 10;
       const rapidStepsUnpaidEuro = rapidStepsNew * 10;
 
+      // --- Step-Details (für UI) ---
+      const tacticsStepDetails = buildStepDetails(baselineT, tNow, tacticsStepsClaimed);
+      const rapidStepDetails   = buildStepDetails(baselineR, rNow, rapidStepsClaimed);
+
+      const eloSteps = {
+        tactics: {
+          current: tNow,
+          baseline: baselineT,
+          total: tacticsStepsTotal,
+          paid: tacticsStepsPaid,
+          open: tacticsStepsNew,
+          details: tacticsStepDetails
+        },
+        rapid: {
+          current: rNow,
+          baseline: baselineR,
+          total: rapidStepsTotal,
+          paid: rapidStepsPaid,
+          open: rapidStepsNew,
+          details: rapidStepDetails
+        }
+      };
+
+      // --- Rapid-Meilensteine ---
       const claimedMilestones = rewardDoc.rapidMilestonesClaimed ?? [];
+
       const reachedMilestones = RAPID_MILESTONES.filter(m =>
         m.rating > baselineR && m.rating <= rNow
       );
+
+      const milestoneDetails = RAPID_MILESTONES.map(m => {
+        const reached = m.rating > baselineR && m.rating <= rNow;
+        const paid = reached && claimedMilestones.includes(m.rating);
+        return {
+          rating: m.rating,
+          reward: m.reward,
+          reached,
+          paid
+        };
+      });
+
       const newMilestones = reachedMilestones.filter(m => !claimedMilestones.includes(m.rating));
       const milestoneRewardRaw = reachedMilestones.reduce((sum, m) => sum + m.reward, 0);
       const milestonePaid = reachedMilestones
@@ -583,10 +720,12 @@
         .reduce((sum, m) => sum + m.reward, 0);
       const milestoneUnpaid = milestoneRewardRaw - milestonePaid;
 
+      // --- Rapid gesamt (Steps + Meilensteine) ---
       const rapidRewardRaw = rapidStepsRewardRaw + milestoneRewardRaw;
       const rapidPaid      = rapidStepsPaidEuro + milestonePaid;
       const rapidUnpaid    = rapidStepsUnpaidEuro + milestoneUnpaid;
 
+      // --- Total ---
       const totalRaw    = tacticsRewardRaw + rapidRewardRaw;
       const totalPaid   = tacticsPaid + rapidPaid;
       const totalUnpaid = totalRaw - totalPaid;
@@ -622,6 +761,11 @@
           paid: totalPaid,
           unpaid: totalUnpaid
         },
+        rapidMilestones: {
+          baseline: baselineR,
+          details: milestoneDetails
+        },
+        eloSteps,
         claimable,
         pending
       };
@@ -1157,7 +1301,7 @@
         const rewardBox = document.createElement("div");
         rewardBox.className = "focus";
 
-        const { tactics, rapid, total, pending } = rewardState;
+        const { tactics, rapid, total, pending, rapidMilestones, eloSteps } = rewardState;
         const activePending = pending && pending.status === "requested" ? pending : null;
 
         rewardBox.innerHTML = `
@@ -1174,6 +1318,94 @@
             <span class="reward-value">${tactics.rewardRaw} / ${rapid.rewardRaw} €</span>
           </div>
         `;
+
+        // Elo-Steps (Rapid & Taktik) – visual
+        if (eloSteps) {
+          const stepContainer = document.createElement("div");
+          stepContainer.className = "step-sections";
+
+          const mapping = [
+            { key: "rapid", label: "Rapid-Elo Steps" },
+            { key: "tactics", label: "Taktik-Elo Steps" }
+          ];
+
+          mapping.forEach(cfg => {
+            const group = eloSteps[cfg.key];
+            if (!group) return;
+
+            const section = document.createElement("div");
+            section.className = "step-section";
+
+            const header = document.createElement("div");
+            header.className = "step-header";
+
+            const leftLabel = document.createElement("div");
+            leftLabel.className = "step-label";
+            leftLabel.textContent = cfg.label;
+
+            const rightInfo = document.createElement("div");
+            rightInfo.innerHTML = `
+              <span class="step-current">${group.current ?? "–"} Elo</span>
+              <span class="step-summary"> · ${group.paid}/${group.total} Steps bezahlt, ${group.open} offen</span>
+            `;
+
+            header.appendChild(leftLabel);
+            header.appendChild(rightInfo);
+            section.appendChild(header);
+
+            const grid = document.createElement("div");
+            grid.className = "step-grid";
+
+            group.details.forEach(step => {
+              const item = document.createElement("div");
+              let cls = "step-locked";
+              if (step.status === "paid") cls = "step-paid";
+              else if (step.status === "open") cls = "step-open";
+
+              item.className = `step-item ${cls}`;
+              item.title = `Step #${step.index} · ${step.rating} Elo`;
+              item.innerHTML = `<span>${step.rating}</span>`;
+              grid.appendChild(item);
+            });
+
+            section.appendChild(grid);
+            stepContainer.appendChild(section);
+          });
+
+          rewardBox.appendChild(stepContainer);
+        }
+
+        // Rapid-Meilensteine: erreicht / bezahlt / offen
+        if (rapidMilestones && rapidMilestones.details && rapidMilestones.details.length) {
+          const msList = document.createElement("div");
+          msList.className = "weekly-goals";
+
+          rapidMilestones.details.forEach(ms => {
+            const row = document.createElement("div");
+            row.className = "weekly-goal-row";
+
+            const leftCol = document.createElement("div");
+            leftCol.className = "weekly-goal-name";
+            leftCol.textContent = `Rapid ${ms.rating} (${ms.reward} €)`;
+
+            const rightCol = document.createElement("div");
+            rightCol.className = "weekly-goal-status";
+
+            if (ms.paid) {
+              rightCol.innerHTML = `<span class="status-paid">bezahlt</span>`;
+            } else if (ms.reached) {
+              rightCol.innerHTML = `<span class="status-ok">erreicht</span>`;
+            } else {
+              rightCol.innerHTML = `<span class="status-missing">offen</span>`;
+            }
+
+            row.appendChild(leftCol);
+            row.appendChild(rightCol);
+            msList.appendChild(row);
+          });
+
+          rewardBox.appendChild(msList);
+        }
 
         const chip = document.createElement("div");
         let chipClass, chipText;

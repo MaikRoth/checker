@@ -1394,36 +1394,106 @@
       });
     }
 
-    function buildAchievements(stats, rewardState) {
-      const { totalGames, modes, tactics } = stats;
-      const { total } = rewardState;
-      const ach = [];
+    function buildAchievements(stats, rewardState, weeklyState) {
+  const { totalGames, modes, tactics } = stats;
+  const { total, isChef } = rewardState;
+  const ach = [];
 
-      if (totalGames >= 100) {
-        ach.push({ label: "🏃 Grinder", style: "silver" });
-      } else if (totalGames >= 50) {
-        ach.push({ label: "🎯 Warmgelaufen", style: "bronze" });
-      }
-
-      const modesWithGames = modes.filter(m => m.games >= 20 && m.winrate != null);
-      if (modesWithGames.length) {
-        modesWithGames.sort((a, b) => b.winrate - a.winrate);
-        const best = modesWithGames[0];
-        if (best.winrate >= 60) {
-          ach.push({ label: `🔥 ${best.label}`, style: "gold" });
-        }
-      }
-
-      if (total.raw >= 50) {
-        ach.push({ label: "💶 Rewards", style: "silver" });
-      }
-
-      if (tactics && tactics.current != null && tactics.current >= 2200) {
-        ach.push({ label: "🧠 Tactics", style: "gold" });
-      }
-
-      return ach.slice(0, 3);
+  // Helper: Duplikate verhindern
+  const add = (label, style) => {
+    if (!ach.some(a => a.label === label)) {
+      ach.push({ label, style });
     }
+  };
+
+  // --- Volume / Grind ---
+  if (totalGames >= 20) {
+    add("📚 Opening Book", "bronze");
+  }
+  if (totalGames >= 50) {
+    add("🎯 Warmgelaufen", "bronze");
+  }
+  if (totalGames >= 100) {
+    add("🏃 Grinder", "silver");
+  }
+  if (totalGames >= 300) {
+    add("🧱 Wall", "silver");
+  }
+  if (totalGames >= 1000) {
+    add("♾ Marathon", "gold");
+  }
+
+  // --- Modus-Performance / Winrate ---
+  const modesWithGames = modes.filter(m => m.games >= 20 && m.winrate != null);
+
+  if (modesWithGames.length) {
+    // bester Modus nach Winrate
+    modesWithGames.sort((a, b) => b.winrate - a.winrate);
+    const best = modesWithGames[0];
+
+    if (best.winrate >= 60) {
+      add(`🔥 ${best.label}`, "gold");
+    }
+    if (best.winrate >= 65 && best.games >= 50) {
+      add("🌋 Peak Mode", "gold");
+    }
+  }
+
+  // meistgespielter Modus für „Tilt Control“
+  if (modes.length) {
+    const mainMode = modes.reduce((a, b) => (a.games > b.games ? a : b));
+    if (mainMode && mainMode.best != null && mainMode.current != null) {
+      const gap = mainMode.best - mainMode.current;
+      if (gap <= 30) {
+        add("🧊 Tilt Control", "silver");
+      }
+    }
+  }
+
+  // --- Elo / Taktik ---
+  const rapidMode = modes.find(m => m.key === "chess_rapid");
+  const rapidElo = rapidMode?.current ?? null;
+  const tacticsElo = tactics?.current ?? null;
+
+  if ((rapidElo != null && rapidElo >= 1500) || (tacticsElo != null && tacticsElo >= 1500)) {
+    add("🚀 Elo Climber", "silver");
+  }
+
+  if (tacticsElo != null && tacticsElo >= 2200) {
+    add("🧠 Tactics", "gold");
+  }
+
+  // --- Rewards / Geld ---
+  if (total.raw >= 50) {
+    add("💶 Rewards", "silver");
+  }
+
+  if (total.paid >= 10) {
+    add("💸 First Cashout", "bronze");
+  }
+  if (total.paid >= 100) {
+    add("🏦 High Roller", "silver");
+  }
+  if (total.unpaid >= 100) {
+    add("💰 Treasure Hunter", "gold");
+  }
+
+  // --- Weekly / Disziplin ---
+  if (weeklyState && weeklyState.weeklyStats) {
+    const { weeklyStats } = weeklyState;
+    const { totalGamesWeek, activeDaysCount, timeoutsWeek } = weeklyStats;
+
+    if (totalGamesWeek >= 10 && timeoutsWeek === 0) {
+      add("🧘 No Tilt Week", "silver");
+    }
+    if (activeDaysCount >= 6) {
+      add("📆 Daily Grinder", "silver");
+    }
+  }
+
+  // keine Begrenzung mehr – alle Badges anzeigen
+  return ach;
+}
 
     function renderPlayerCard(stats, rewardState, weeklyState) {
       const cards = document.getElementById("cards");
@@ -1494,10 +1564,6 @@
 
         adminBox.innerHTML = `
           <div class="admin-row">
-            <div class="admin-label">Rolle</div>
-            <div class="admin-value">Bankroll & Orga</div>
-          </div>
-          <div class="admin-row">
             <div class="admin-label">Games gesamt</div>
             <div class="admin-value">${stats.totalGames}</div>
           </div>
@@ -1506,9 +1572,15 @@
             <div class="admin-value">${rapidMode?.current ?? "–"}</div>
           </div>
           <div class="admin-row">
-            <div class="admin-label">Blitz / Bullet</div>
+            <div class="admin-label">Blitz Elo</div>
             <div class="admin-value">
-              ${blitzMode?.current ?? "–"} / ${bulletMode?.current ?? "–"}
+              ${blitzMode?.current ?? "–"}
+            </div>
+          </div>
+          <div class="admin-row">
+            <div class="admin-label">Bullet Elo</div>
+            <div class="admin-value">
+              ${bulletMode?.current ?? "–"}
             </div>
           </div>
           <div class="admin-row">
@@ -1544,7 +1616,7 @@
 
         const foot = document.createElement("div");
         foot.className = "admin-footnote";
-        foot.textContent = "Dieser Account nimmt nicht am Geldsystem teil – reiner Coach / Übersicht.";
+        foot.textContent = "";
         adminBox.appendChild(foot);
 
         wrap.appendChild(adminBox);
@@ -1620,11 +1692,13 @@
           stepsBox.appendChild(stepContainer);
           wrap.appendChild(stepsBox);
         }
+        
 
-        card.appendChild(wrap);
-        cards.appendChild(card);
-        return;
-      }
+  card.appendChild(wrap);
+  cards.appendChild(card);
+  return;
+}
+
 
       // Gemeinsamer Teil für ERR_Daemon + Kathi (Ratings + Badges)
       const modesTitle = document.createElement("div");
@@ -1706,7 +1780,7 @@
 
       const achRow = document.createElement("div");
       achRow.className = "badge-row";
-      const achievements = buildAchievements(stats, rewardState);
+      const achievements = buildAchievements(stats, rewardState, weeklyState);
 
       if (!achievements.length) {
         const span = document.createElement("span");
@@ -2161,8 +2235,8 @@
         playersCombined
           .sort((a, b) => {
             const order = (player) => {
-              if (player.stats.username === PAY_USER_USERNAME) return 0;
-              if (player.stats.username === GIRLFRIEND_USERNAME) return 1;
+              if (player.stats.username === PAY_USER_USERNAME) return 1;
+              if (player.stats.username === GIRLFRIEND_USERNAME) return 0;
               if (player.stats.username === CHEF_USERNAME) return 2;
               return 3;
             };

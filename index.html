@@ -2,452 +2,727 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>Chess Squad – Rewards & Activity</title>
+  <title>Chess Squad – Progress Board</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #020617 0, #020617 40%, #000 100%);
-      color: #e5e7eb;
-    }
+  :root {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #020617;
+    color: #e5e7eb;
+  }
 
+  html,
+  body {
+    background:
+      radial-gradient(circle at top, rgba(15,23,42,0.9), #020617 55%, #000 100%),
+      repeating-linear-gradient(
+        45deg,
+        rgba(15,23,42,0.18),
+        rgba(15,23,42,0.18) 1px,
+        transparent 1px,
+        transparent 10px
+      );
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 2rem 1.25rem 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  main {
+    width: 100%;
+    max-width: 1100px;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 1.6rem;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2.1rem, 3.4vw, 2.7rem);
+    text-align: center;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-shadow: 0 0 24px rgba(59,130,246,0.35);
+  }
+
+  header::after {
+    content: "";
+    display: block;
+    width: 72px;
+    height: 2px;
+    margin: 0.9rem auto 0;
+    border-radius: 999px;
+    background: linear-gradient(to right, #38bdf8, #a855f7, #ec4899);
+    opacity: 0.8;
+  }
+
+  .subtitle {
+    color: #9ca3af;
+    font-size: 0.85rem;
+    text-align: center;
+    margin-top: 0.4rem;
+    min-height: 1.2em;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.4rem;
+    width: 100%;
+  }
+
+  .card {
+    background: #020617;
+    border-radius: 0.9rem;
+    padding: 1rem 1.1rem 1.1rem;
+    border: 1px solid #1f2937;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.7);
+    font-size: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    position: relative;
+    overflow: hidden;
+    transition:
+      transform 150ms ease-out,
+      box-shadow 150ms ease-out,
+      border-color 150ms ease-out,
+      background 150ms ease-out;
+  }
+
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at top, rgba(148,163,184,0.25), transparent 55%);
+    mix-blend-mode: soft-light;
+  }
+
+  .card-inner {
+    position: relative;
+    z-index: 1;
+  }
+
+  .card:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.85);
+    border-color: #4b5563;
+  }
+
+  .card:active {
+    transform: translateY(-1px) scale(0.995);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.75);
+  }
+
+  /* M41K */
+  .card-admin {
+    border-radius: 0.9rem;
+    border-color: #38bdf8;
+    box-shadow: 0 20px 55px rgba(59,130,246,0.5);
+    background: radial-gradient(circle at top left, #0f172a, #020617 55%, #020617);
+  }
+
+  .card-admin::before {
+    background:
+      radial-gradient(circle at 0% 0%, rgba(59,130,246,0.35), transparent 60%),
+      radial-gradient(circle at 100% 0%, rgba(56,189,248,0.2), transparent 55%);
+    mix-blend-mode: screen;
+    opacity: 0.9;
+  }
+
+  .card-admin:hover {
+    box-shadow: 0 26px 70px rgba(56,189,248,0.65);
+  }
+
+  /* ERR_Daemon – grün/gold */
+  .card-pay {
+    border-color: #22c55e;
+    box-shadow: 0 22px 60px rgba(34,197,94,0.45);
+    background: radial-gradient(circle at top left, #052e16, #020617 60%);
+  }
+
+  .card-pay::before {
+    background:
+      radial-gradient(circle at 0% 0%, rgba(34,197,94,0.35), transparent 60%),
+      radial-gradient(circle at 100% 0%, rgba(250,204,21,0.25), transparent 55%);
+    mix-blend-mode: screen;
+    opacity: 0.9;
+  }
+
+  .card-pay:hover {
+    box-shadow: 0 26px 70px rgba(34,197,94,0.6);
+  }
+
+  /* Kathi – pink/lila */
+  .card-gf {
+    border-color: #ec4899;
+    box-shadow: 0 22px 60px rgba(236,72,153,0.45);
+    background: radial-gradient(circle at top left, #4c1d95, #020617 60%);
+  }
+
+  .card-gf::before {
+    background:
+      radial-gradient(circle at 0% 0%, rgba(236,72,153,0.35), transparent 60%),
+      radial-gradient(circle at 100% 0%, rgba(129,140,248,0.25), transparent 55%);
+    mix-blend-mode: screen;
+    opacity: 0.9;
+  }
+
+  .card-gf:hover {
+    box-shadow: 0 26px 70px rgba(236,72,153,0.6);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 0.3rem;
+  }
+
+  .card-title-block {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    border: 2px solid #38bdf8;
+    object-fit: cover;
+    background: #020617;
+    flex-shrink: 0;
+    box-shadow:
+      0 0 0 2px rgba(15,23,42,1),
+      0 0 0 4px rgba(56,189,248,0.6);
+  }
+
+  .card-pay .avatar {
+    box-shadow:
+      0 0 0 2px rgba(15,23,42,1),
+      0 0 0 4px rgba(34,197,94,0.6);
+  }
+
+  .card-gf .avatar {
+    box-shadow:
+      0 0 0 2px rgba(15,23,42,1),
+      0 0 0 4px rgba(236,72,153,0.6);
+  }
+
+  .username {
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+  }
+
+  .status-badge {
+    padding: 0.18rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    backdrop-filter: blur(10px);
+    background: linear-gradient(
+      135deg,
+      rgba(15,23,42,0.85),
+      rgba(15,23,42,0.4)
+    );
+  }
+
+  .status-active {
+    background: rgba(34,197,94,0.15);
+    color: #bbf7d0;
+    border-color: rgba(34,197,94,0.5);
+  }
+
+  .status-chill {
+    background: rgba(148,163,184,0.12);
+    color: #e5e7eb;
+    border-color: rgba(148,163,184,0.4);
+  }
+
+  .status-admin {
+    background: rgba(59,130,246,0.16);
+    color: #bfdbfe;
+    border-color: rgba(59,130,246,0.75);
+  }
+
+  .status-gf {
+    background: rgba(236,72,153,0.16);
+    color: #f9a8d4;
+    border-color: rgba(236,72,153,0.75);
+  }
+
+  .section-title {
+    margin-top: 0.4rem;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: #d1d5db;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .section-subtitle {
+    margin-top: 0.1rem;
+    font-size: 0.72rem;
+    color: #9ca3af;
+  }
+
+  .modes {
+    margin-top: 0.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.76rem;
+  }
+
+  .mode-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.25rem 0.4rem;
+    border-radius: 0.55rem;
+    background: rgba(15,23,42,0.9);
+    border: 1px solid rgba(30,64,175,0.7);
+    position: relative;
+    overflow: hidden;
+    transition:
+      background 120ms ease-out,
+      border-color 120ms ease-out,
+      transform 120ms ease-out;
+  }
+
+  .mode-row::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    background: radial-gradient(circle at top left, rgba(56,189,248,0.16), transparent 55%);
+    transition: opacity 150ms ease-out;
+    pointer-events: none;
+  }
+
+  .mode-row:hover {
+    background: rgba(15,23,42,0.95);
+    border-color: rgba(56,189,248,0.9);
+    transform: translateY(-1px);
+  }
+
+  .mode-row:hover::before {
+    opacity: 1;
+  }
+
+  .mode-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .mode-label {
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .mode-meta {
+    color: #9ca3af;
+    font-size: 0.7rem;
+  }
+
+  .mode-right {
+    text-align: right;
+    font-size: 0.74rem;
+  }
+
+  .rating {
+    font-weight: 600;
+    color: #facc15;
+  }
+
+  .gap-good {
+    color: #22c55e;
+  }
+  .gap-mid {
+    color: #eab308;
+  }
+  .gap-bad {
+    color: #f97316;
+  }
+
+  .badge-row {
+    margin-top: 0.25rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+  }
+
+  .badge {
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    border: 1px solid #1f2937;
+    background: rgba(15,23,42,0.95);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+    cursor: default;
+  }
+
+  .badge.gold {
+    border-color: #fbbf24;
+    color: #facc15;
+  }
+
+  .badge.silver {
+    border-color: #9ca3af;
+    color: #e5e7eb;
+  }
+
+  .badge.bronze {
+    border-color: #f97316;
+    color: #fed7aa;
+  }
+
+  .reward-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.12rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    margin-top: 0.25rem;
+  }
+
+  .chip-open {
+    background: rgba(234,179,8,0.15);
+    border: 1px solid #eab308;
+    color: #fde68a;
+  }
+
+  .chip-requested {
+    background: rgba(59,130,246,0.15);
+    border: 1px solid #3b82f6;
+    color: #bfdbfe;
+  }
+
+  .chip-paid {
+    background: rgba(34,197,94,0.15);
+    border: 1px solid #22c55e;
+    color: #bbf7d0;
+  }
+
+  .btn {
+    margin-top: 0.45rem;
+    padding: 0.32rem 0.9rem;
+    border-radius: 999px;
+    border: none;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: #022c22;
+    font-size: 0.74rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 10px 22px rgba(22,163,74,0.45);
+    transition:
+      transform 130ms ease-out,
+      box-shadow 130ms ease-out,
+      filter 130ms ease-out;
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px rgba(22,163,74,0.55);
+    filter: brightness(1.02);
+  }
+
+  .btn-danger {
+    border: none;
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    color: #fee2e2;
+    margin-left: 0.3rem;
+    box-shadow: 0 10px 22px rgba(239,68,68,0.45);
+  }
+
+  .weekly-goals {
+    margin-top: 0.25rem;
+    font-size: 0.74rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.18rem;
+  }
+
+  .weekly-goal-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.4rem;
+    padding: 0.18rem 0.3rem;
+    border-radius: 0.45rem;
+    background: rgba(15,23,42,0.8);
+  }
+
+  .weekly-goal-name {
+    font-weight: 500;
+  }
+
+  .weekly-goal-status {
+    font-size: 0.72rem;
+    text-align: right;
+  }
+
+  .status-ok {
+    color: #bbf7d0;
+  }
+
+  .status-paid {
+    color: #93c5fd;
+  }
+
+  .status-missing {
+    color: #facc15;
+  }
+
+  footer {
+    font-size: 0.72rem;
+    color: #6b7280;
+    text-align: center;
+    margin-top: 1.2rem;
+  }
+
+  a {
+    color: #60a5fa;
+  }
+
+  /* Elo-Step-Ansicht */
+  .step-sections {
+    margin-top: 0.3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .step-section {
+    font-size: 0.74rem;
+  }
+
+  .step-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.12rem;
+  }
+
+  .step-label {
+    font-weight: 600;
+    color: #e5e7eb;
+  }
+
+  .step-current {
+    font-weight: 600;
+    color: #facc15;
+  }
+
+  .step-summary {
+    font-size: 0.7rem;
+    color: #9ca3af;
+  }
+
+  .step-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-top: 0.05rem;
+  }
+
+  .step-item {
+    min-width: 48px;
+    padding: 0.16rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    text-align: center;
+    border: 1px solid;
+    box-sizing: border-box;
+  }
+
+  .step-item span {
+    display: inline-block;
+  }
+
+  .step-paid {
+    background: rgba(34,197,94,0.2);
+    border-color: #22c55e;
+    color: #bbf7d0;
+    box-shadow: 0 0 12px rgba(34,197,94,0.45);
+  }
+
+  .step-open {
+    background: rgba(59,130,246,0.22);
+    border-color: #3b82f6;
+    color: #bfdbfe;
+    box-shadow: 0 0 12px rgba(59,130,246,0.4);
+  }
+
+  .step-locked {
+    background: rgba(15,23,42,0.95);
+    border-color: #1f2937;
+    color: #6b7280;
+  }
+
+  .step-baseline {
+    background: rgba(15,23,42,0.9);
+    border-style: dashed;
+    border-color: #374151;
+    color: #4b5563;
+    opacity: 0.7;
+  }
+
+  /* Admin / M41K View */
+  .admin-summary {
+    margin-top: 0.2rem;
+    font-size: 0.78rem;
+    padding: 0.45rem 0.4rem 0.45rem;
+    border-radius: 0.6rem;
+    background: rgba(15,23,42,0.95);
+    border: 1px solid rgba(55,65,81,0.9);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .admin-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.4rem;
+  }
+
+  .admin-label {
+    color: #9ca3af;
+  }
+
+  .admin-value {
+    font-weight: 600;
+  }
+
+  .admin-row-muted .admin-value {
+    color: #9ca3af;
+    font-weight: 500;
+  }
+
+  .admin-footnote {
+    margin-top: 0.25rem;
+    font-size: 0.7rem;
+    color: #6b7280;
+  }
+
+  .admin-steps {
+    border-color: rgba(56,189,248,0.85);
+    background: radial-gradient(circle at top, rgba(15,23,42,0.95), #020617 70%);
+  }
+
+  .card-admin .step-item {
+    font-size: 0.72rem;
+    padding: 0.15rem 0.38rem;
+  }
+
+  .card-admin .step-paid,
+  .card-admin .step-open {
+    background: radial-gradient(circle, rgba(56,189,248,0.35), rgba(15,23,42,0.9));
+    border-color: #38bdf8;
+    color: #e0f2fe;
+  }
+
+  /* Freundin-Extras */
+  .gf-journey-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.18rem;
+    font-size: 0.74rem;
+  }
+
+  .gf-journey-label {
+    font-weight: 600;
+    color: #f9a8d4;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .gf-tagline {
+    font-size: 0.7rem;
+    color: #f9a8d4;
+    opacity: 0.9;
+  }
+
+  .gf-dot-row {
+    display: flex;
+    gap: 0.16rem;
+    margin-top: 0.1rem;
+    flex-wrap: wrap;
+  }
+
+  .gf-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    border: 1px solid #4b5563;
+    background: rgba(15,23,42,0.95);
+  }
+
+  .gf-dot-reached {
+    background: radial-gradient(circle, #f9a8d4, #be185d);
+    border-color: #f9a8d4;
+  }
+
+  .gf-note {
+    font-size: 0.7rem;
+    color: #9ca3af;
+    margin-top: 0.2rem;
+  }
+
+  @media (max-width: 640px) {
     body {
-      margin: 0;
-      min-height: 100vh;
-      padding: 2rem 1.25rem 3rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    main {
-      width: 100%;
-      max-width: 1100px;
-      display: flex;
-      flex-direction: column;
-      gap: 2rem;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(2rem, 3vw, 2.5rem);
-      text-align: center;
-    }
-
-    .subtitle {
-      color: #9ca3af;
-      font-size: 0.85rem;
-      text-align: center;
-      margin-top: 0.4rem;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.2rem;
-      width: 100%;
+      padding: 1.4rem 0.9rem 2.2rem;
     }
 
     .card {
-      background: radial-gradient(circle at top, #111827, #020617);
-      border-radius: 0.9rem;
-      padding: 1rem 1.1rem 1.1rem;
-      border: 1px solid #1f2937;
-      box-shadow: 0 18px 45px rgba(0,0,0,0.6);
-      font-size: 0.8rem;
+      padding: 0.9rem 0.9rem 1rem;
+      border-radius: 0.8rem;
     }
 
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      gap: 0.75rem;
-      align-items: center;
-      margin-bottom: 0.4rem;
+    .grid {
+      gap: 1rem;
     }
+  }
+</style>
 
-    .card-title-block {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .avatar {
-      width: 30px;
-      height: 30px;
-      border-radius: 999px;
-      border: 2px solid #22c55e;
-      object-fit: cover;
-      background: #020617;
-      flex-shrink: 0;
-    }
-
-    .username {
-      font-weight: 600;
-      font-size: 0.95rem;
-    }
-
-    .status-badge {
-      padding: 0.15rem 0.6rem;
-      border-radius: 999px;
-      font-size: 0.7rem;
-      font-weight: 600;
-    }
-
-    .status-active {
-      background: #065f46;
-      color: #bbf7d0;
-    }
-
-    .status-chill {
-      background: #7f1d1d;
-      color: #fecaca;
-    }
-
-    .section-title {
-      margin-top: 0.55rem;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: #d1d5db;
-      letter-spacing: 0.02em;
-      text-transform: uppercase;
-    }
-
-    .modes {
-      margin-top: 0.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      font-size: 0.76rem;
-    }
-
-    .mode-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.5rem;
-      padding: 0.25rem 0.4rem;
-      border-radius: 0.5rem;
-      background: rgba(15,23,42,0.7);
-    }
-
-    .mode-left {
-      display: flex;
-      flex-direction: column;
-      gap: 0.1rem;
-    }
-
-    .mode-label {
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
-    }
-
-    .mode-meta {
-      color: #9ca3af;
-      font-size: 0.7rem;
-    }
-
-    .mode-right {
-      text-align: right;
-      font-size: 0.74rem;
-    }
-
-    .rating {
-      font-weight: 600;
-      color: #facc15;
-    }
-
-    .gap-good {
-      color: #22c55e;
-    }
-    .gap-mid {
-      color: #eab308;
-    }
-    .gap-bad {
-      color: #f97316;
-    }
-
-    .badge-row {
-      margin-top: 0.3rem;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.25rem;
-      font-size: 0.7rem;
-    }
-
-    .badge {
-      padding: 0.15rem 0.45rem;
-      border-radius: 999px;
-      border: 1px solid #374151;
-      background: #020617;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-      white-space: nowrap;
-      cursor: default;
-    }
-
-    .badge.gold {
-      border-color: #fbbf24;
-      color: #facc15;
-    }
-
-    .badge.silver {
-      border-color: #9ca3af;
-      color: #e5e7eb;
-    }
-
-    .badge.bronze {
-      border-color: #f97316;
-      color: #fed7aa;
-    }
-
-    .badge.fail {
-      border-color: #ef4444;
-      color: #fecaca;
-    }
-
-    .focus {
-      margin-top: 0.4rem;
-      font-size: 0.76rem;
-      line-height: 1.3;
-      padding: 0.4rem 0.45rem;
-      border-radius: 0.55rem;
-      background: rgba(15,23,42,0.85);
-      border: 1px dashed #1f2937;
-      color: #e5e7eb;
-    }
-
-    .focus strong {
-      color: #a5b4fc;
-    }
-
-    .reward-row {
-      margin-top: 0.35rem;
-      font-size: 0.76rem;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      row-gap: 0.1rem;
-      column-gap: 0.4rem;
-    }
-
-    .reward-label {
-      color: #9ca3af;
-    }
-
-    .reward-value {
-      text-align: right;
-      font-weight: 600;
-    }
-
-    .reward-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-      padding: 0.12rem 0.5rem;
-      border-radius: 999px;
-      font-size: 0.7rem;
-      margin-top: 0.3rem;
-    }
-
-    .chip-open {
-      background: rgba(234,179,8,0.15);
-      border: 1px solid #eab308;
-      color: #fde68a;
-    }
-
-    .chip-requested {
-      background: rgba(59,130,246,0.15);
-      border: 1px solid #3b82f6;
-      color: #bfdbfe;
-    }
-
-    .chip-paid {
-      background: rgba(34,197,94,0.15);
-      border: 1px solid #22c55e;
-      color: #bbf7d0;
-    }
-
-    .btn {
-      margin-top: 0.4rem;
-      padding: 0.25rem 0.7rem;
-      border-radius: 999px;
-      border: 1px solid #22c55e;
-      background: #022c22;
-      color: #bbf7d0;
-      font-size: 0.72rem;
-      cursor: pointer;
-    }
-    .btn:hover {
-      filter: brightness(1.07);
-    }
-
-    .btn-danger {
-      border-color: #ef4444;
-      background: #450a0a;
-      color: #fecaca;
-      margin-left: 0.3rem;
-    }
-
-    .weekly-goals {
-      margin-top: 0.3rem;
-      font-size: 0.74rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.18rem;
-    }
-
-    .weekly-goal-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 0.4rem;
-      padding: 0.18rem 0.3rem;
-      border-radius: 0.45rem;
-      background: rgba(15,23,42,0.6);
-    }
-
-    .weekly-goal-name {
-      font-weight: 500;
-    }
-
-    .weekly-goal-status {
-      font-size: 0.72rem;
-      text-align: right;
-    }
-
-    .status-ok {
-      color: #bbf7d0;
-    }
-
-    .status-paid {
-      color: #93c5fd;
-    }
-
-    .status-missing {
-      color: #facc15;
-    }
-
-    .squad-card {
-      background: #020617;
-      border-radius: 0.9rem;
-      border: 1px solid #1f2937;
-      padding: 0.8rem 1rem;
-      font-size: 0.78rem;
-    }
-
-    .squad-title {
-      font-size: 0.8rem;
-      font-weight: 600;
-      margin-bottom: 0.3rem;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-
-    .squad-list {
-      font-size: 0.78rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.2rem;
-    }
-
-    footer {
-      font-size: 0.72rem;
-      color: #6b7280;
-      text-align: center;
-      margin-top: 1.2rem;
-    }
-
-    a {
-      color: #60a5fa;
-    }
-
-    /* Elo-Step-Ansicht */
-    .step-sections {
-      margin-top: 0.4rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-    }
-
-    .step-section {
-      font-size: 0.74rem;
-    }
-
-    .step-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 0.18rem;
-    }
-
-    .step-label {
-      font-weight: 600;
-      color: #e5e7eb;
-    }
-
-    .step-current {
-      font-weight: 600;
-      color: #facc15;
-    }
-
-    .step-summary {
-      font-size: 0.7rem;
-      color: #9ca3af;
-    }
-
-    .step-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.25rem;
-      margin-top: 0.15rem;
-    }
-
-    .step-item {
-      min-width: 46px;
-      padding: 0.15rem 0.3rem;
-      border-radius: 999px;
-      font-size: 0.7rem;
-      text-align: center;
-      border: 1px solid;
-      box-sizing: border-box;
-    }
-
-    .step-item span {
-      display: inline-block;
-    }
-
-    .step-paid {
-      background: rgba(34,197,94,0.18);
-      border-color: #22c55e;
-      color: #bbf7d0;
-    }
-
-    .step-open {
-      background: rgba(59,130,246,0.18);
-      border-color: #3b82f6;
-      color: #bfdbfe;
-    }
-
-    .step-locked {
-      background: rgba(15,23,42,0.9);
-      border-color: #1f2937;
-      color: #6b7280;
-    }
-  </style>
 </head>
 <body>
   <main>
     <header style="text-align:center;">
-      <h1>♟️ Chess Squad Rewards</h1>
+      <h1>Chess Squad – Progress Board</h1>
       <p class="subtitle" id="subtitle">
         Lade Live-Daten von Chess.com…
       </p>
     </header>
 
     <section class="grid" id="cards"></section>
-    <section id="squad"></section>
 
     <footer>
       Datenquelle: <a href="https://www.chess.com/news/view/published-data-api" target="_blank" rel="noreferrer">Chess.com API</a> · Backend: Firebase
@@ -455,6 +730,12 @@
   </main>
 
   <script type="module">
+    // Fehler-Handler, damit du sofort siehst, wenn JS crasht
+    window.addEventListener("error", (event) => {
+      const el = document.getElementById("subtitle");
+      if (el) el.textContent = "Fehler: " + (event.message || "Unbekannter Fehler – siehe Konsole");
+    });
+
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
     import {
       getFirestore,
@@ -479,6 +760,8 @@
 
     const PLAYERS = ["ERR_Daemon", "M41K", "Kathi_2905"];
     const CHEF_USERNAME = "M41K";
+    const PAY_USER_USERNAME = "ERR_Daemon";
+    const GIRLFRIEND_USERNAME = "Kathi_2905";
 
     const MODES = [
       { key: "chess_rapid", label: "Rapid",  icon: "⏱️" },
@@ -507,11 +790,12 @@
       { id: "noTimeouts", label: "Kein Timeout", amount: 2 }
     ];
 
-    const STEP_VIEW_COUNT = 15; // wie viele 100-Elo-Steps pro Modus anzeigen
+    const RAPID_MAX_STEP_RATING = 2000;
+    const TACTICS_MAX_STEP_RATING = 3000;
 
     async function fetchJson(url) {
       const res = await fetch(url);
-      if (!res.ok) throw new Error("HTTP " + res.status + " for " + url);
+      if (!res.ok) throw new Error("HTTP " + res.status + " für " + url);
       return res.json();
     }
 
@@ -616,26 +900,36 @@
       return snap.data();
     }
 
-    function buildStepDetails(baseline, current, stepsClaimed, maxSteps = STEP_VIEW_COUNT) {
+    // Steps, jetzt mit maxRating-Parameter (Rapid 2000, Taktik 3000)
+    function buildStepDetails(baseline, current, stepsClaimed, maxRating) {
       const steps = [];
-      for (let i = 1; i <= maxSteps; i++) {
-        const rating = baseline + i * 100;
-        let status = "locked"; // noch nicht erreicht
 
-        if (current >= rating) {
-          if (i <= stepsClaimed) {
-            status = "paid";   // erreicht & bezahlt
+      for (let rating = 100; rating <= maxRating; rating += 100) {
+        let status = "locked";
+        let stepIndex = null;
+
+        if (rating <= baseline) {
+          status = "baseline";
+        } else {
+          stepIndex = Math.floor((rating - baseline) / 100);
+          if (stepIndex <= 0) {
+            status = current >= rating ? "open" : "locked";
           } else {
-            status = "open";   // erreicht, aber noch offen
+            if (current >= rating) {
+              if (stepIndex <= stepsClaimed) {
+                status = "paid";
+              } else {
+                status = "open";
+              }
+            } else {
+              status = "locked";
+            }
           }
         }
 
-        steps.push({
-          index: i,
-          rating,
-          status
-        });
+        steps.push({ rating, status });
       }
+
       return steps;
     }
 
@@ -647,7 +941,6 @@
       const tNow = tacticsRating ?? 0;
       const rNow = rapidRating   ?? 0;
 
-      // --- Taktik-Delta & Steps ---
       const deltaT = Math.max(0, tNow - baselineT);
       const tacticsStepsTotal = Math.floor(deltaT / 100);
       const tacticsRewardRaw  = tacticsStepsTotal * 10;
@@ -661,7 +954,6 @@
       const nextTacticsTarget = baselineT + (tacticsStepsTotal + 1) * 100;
       const tacticsToNext     = Math.max(0, nextTacticsTarget - tNow);
 
-      // --- Rapid-Delta & Steps ---
       const deltaR = Math.max(0, rNow - baselineR);
       const rapidStepsTotal = Math.floor(deltaR / 100);
       const rapidStepsRewardRaw = rapidStepsTotal * 10;
@@ -672,9 +964,9 @@
       const rapidStepsPaidEuro   = rapidStepsPaid * 10;
       const rapidStepsUnpaidEuro = rapidStepsNew * 10;
 
-      // --- Step-Details (für UI) ---
-      const tacticsStepDetails = buildStepDetails(baselineT, tNow, tacticsStepsClaimed);
-      const rapidStepDetails   = buildStepDetails(baselineR, rNow, rapidStepsClaimed);
+      // hier: verschiedene Obergrenzen
+      const tacticsStepDetails = buildStepDetails(baselineT, tNow, tacticsStepsClaimed, TACTICS_MAX_STEP_RATING);
+      const rapidStepDetails   = buildStepDetails(baselineR, rNow, rapidStepsClaimed, RAPID_MAX_STEP_RATING);
 
       const eloSteps = {
         tactics: {
@@ -695,7 +987,6 @@
         }
       };
 
-      // --- Rapid-Meilensteine ---
       const claimedMilestones = rewardDoc.rapidMilestonesClaimed ?? [];
 
       const reachedMilestones = RAPID_MILESTONES.filter(m =>
@@ -705,12 +996,7 @@
       const milestoneDetails = RAPID_MILESTONES.map(m => {
         const reached = m.rating > baselineR && m.rating <= rNow;
         const paid = reached && claimedMilestones.includes(m.rating);
-        return {
-          rating: m.rating,
-          reward: m.reward,
-          reached,
-          paid
-        };
+        return { rating: m.rating, reward: m.reward, reached, paid };
       });
 
       const newMilestones = reachedMilestones.filter(m => !claimedMilestones.includes(m.rating));
@@ -720,12 +1006,10 @@
         .reduce((sum, m) => sum + m.reward, 0);
       const milestoneUnpaid = milestoneRewardRaw - milestonePaid;
 
-      // --- Rapid gesamt (Steps + Meilensteine) ---
       const rapidRewardRaw = rapidStepsRewardRaw + milestoneRewardRaw;
       const rapidPaid      = rapidStepsPaidEuro + milestonePaid;
       const rapidUnpaid    = rapidStepsUnpaidEuro + milestoneUnpaid;
 
-      // --- Total ---
       const totalRaw    = tacticsRewardRaw + rapidRewardRaw;
       const totalPaid   = tacticsPaid + rapidPaid;
       const totalUnpaid = totalRaw - totalPaid;
@@ -843,7 +1127,7 @@
 
     function getCurrentWeekRange() {
       const now = new Date();
-      const day = now.getDay(); // 0=So,1=Mo,...6=Sa
+      const day = now.getDay();
       const diffToMonday = (day === 0 ? -6 : 1 - day);
       const monday = new Date(now);
       monday.setHours(0,0,0,0);
@@ -900,11 +1184,10 @@
 
             const whiteUser = g.white && g.white.username && g.white.username.toLowerCase();
             const blackUser = g.black && g.black.username && g.black.username.toLowerCase();
-            const unameLower = uname;
 
             let myResult = null;
-            if (whiteUser === unameLower) myResult = g.white.result;
-            else if (blackUser === unameLower) myResult = g.black.result;
+            if (whiteUser === uname) myResult = g.white.result;
+            else if (blackUser === uname) myResult = g.black.result;
 
             if (myResult === "timeout" || myResult === "abandoned") {
               timeoutsWeek++;
@@ -967,7 +1250,6 @@
     }
 
     function computeWeeklyState(username, weeklyStats, weeklyDoc, weekKey) {
-      const isChef = username === CHEF_USERNAME;
       const goalsPaid = weeklyDoc.goalsPaid || [];
       const totalPaid = weeklyDoc.totalPaid || 0;
       const pending = weeklyDoc.pendingClaim || null;
@@ -1015,7 +1297,6 @@
       const rawEarned = totalPaid + potentialGoals.reduce((s, g) => s + g.amount, 0);
 
       return {
-        isChef,
         weekKey,
         weeklyStats,
         goalStates,
@@ -1119,41 +1400,21 @@
       return ach.slice(0, 3);
     }
 
-    function buildFocus(stats, rewardState) {
-      const { tactics } = stats;
-      const { rapid, tactics: tState } = rewardState;
-
-      if (rapid.unpaid > 0) {
-        return {
-          title: "Rapid",
-          text: `Rapid spielen, um <strong>${rapid.unpaid} €</strong> klarzumachen.`
-        };
-      }
-
-      if (tState.unpaid > 0) {
-        return {
-          title: "Taktik",
-          text: `Taktik pushen für <strong>${tState.unpaid} €</strong> Extra.`
-        };
-      }
-
-      if (tactics && tactics.current != null) {
-        return {
-          title: "Warmup",
-          text: `Kurz Taktik (${tactics.current}) und dann Partien.`
-        };
-      }
-
-      return {
-        title: "Einfach spielen",
-        text: "Format aussuchen, ein paar konzentrierte Games machen."
-      };
-    }
-
     function renderPlayerCard(stats, rewardState, weeklyState) {
       const cards = document.getElementById("cards");
       const card = document.createElement("article");
       card.className = "card";
+
+      const isChef = rewardState.isChef;
+      const isGf = stats.username === GIRLFRIEND_USERNAME;
+      const isPayUser = stats.username === PAY_USER_USERNAME;
+
+      if (isChef) card.classList.add("card-admin");
+      else if (isPayUser) card.classList.add("card-pay");
+      else if (isGf) card.classList.add("card-gf");
+
+      const wrap = document.createElement("div");
+      wrap.className = "card-inner";
 
       const header = document.createElement("div");
       header.className = "card-header";
@@ -1177,16 +1438,174 @@
       header.appendChild(left);
 
       const status = document.createElement("div");
-      status.className = "status-badge " + (stats.active ? "status-active" : "status-chill");
-      status.textContent = stats.active ? "AKTIV" : "PAUSE";
+      status.className = "status-badge";
+
+      if (isChef) {
+        status.classList.add("status-admin");
+        status.textContent = "ADMIN";
+      } else if (isGf) {
+        status.classList.add("status-gf");
+        status.textContent = "GF";
+      } else {
+        status.classList.add(stats.active ? "status-active" : "status-chill");
+        status.textContent = stats.active ? "AKTIV" : "PAUSE";
+      }
       header.appendChild(status);
 
-      card.appendChild(header);
+      wrap.appendChild(header);
 
+      // Admin / M41K
+      if (isChef) {
+        const adminBox = document.createElement("div");
+        adminBox.className = "admin-summary";
+
+        const rapidMode = stats.modes.find(m => m.key === "chess_rapid");
+        const blitzMode = stats.modes.find(m => m.key === "chess_blitz");
+        const bulletMode = stats.modes.find(m => m.key === "chess_bullet");
+        const dailyMode = stats.modes.find(m => m.key === "chess_daily");
+
+        const tacticsRating = stats.tactics?.current ?? "–";
+        const tacticsHighest = stats.tactics?.highest ?? "–";
+
+        adminBox.innerHTML = `
+          <div class="admin-row">
+            <div class="admin-label">Rolle</div>
+            <div class="admin-value">Bankroll & Orga</div>
+          </div>
+          <div class="admin-row">
+            <div class="admin-label">Games gesamt</div>
+            <div class="admin-value">${stats.totalGames}</div>
+          </div>
+          <div class="admin-row">
+            <div class="admin-label">Rapid Elo</div>
+            <div class="admin-value">${rapidMode?.current ?? "–"}</div>
+          </div>
+          <div class="admin-row">
+            <div class="admin-label">Blitz / Bullet</div>
+            <div class="admin-value">
+              ${blitzMode?.current ?? "–"} / ${bulletMode?.current ?? "–"}
+            </div>
+          </div>
+          <div class="admin-row">
+            <div class="admin-label">Daily Elo</div>
+            <div class="admin-value">${dailyMode?.current ?? "–"}</div>
+          </div>
+          <div class="admin-row">
+            <div class="admin-label">Taktik Elo</div>
+            <div class="admin-value">${tacticsRating} (max ${tacticsHighest})</div>
+          </div>
+        `;
+
+        if (weeklyState && weeklyState.weeklyStats) {
+          const { weeklyStats, weekKey } = weeklyState;
+          const extra = document.createElement("div");
+          extra.className = "admin-row";
+          extra.innerHTML = `
+            <div class="admin-label">Diese Woche</div>
+            <div class="admin-value">
+              ${weeklyStats.totalGamesWeek} G (${weeklyStats.rapidGamesWeek} Rapid)
+            </div>
+          `;
+          adminBox.appendChild(extra);
+
+          const extra2 = document.createElement("div");
+          extra2.className = "admin-row admin-row-muted";
+          extra2.innerHTML = `
+            <div class="admin-label">${weekKey}</div>
+            <div class="admin-value">${weeklyStats.activeDaysCount}/7 Tage · TO: ${weeklyStats.timeoutsWeek}</div>
+          `;
+          adminBox.appendChild(extra2);
+        }
+
+        const foot = document.createElement("div");
+        foot.className = "admin-footnote";
+        foot.textContent = "Dieser Account nimmt nicht am Geldsystem teil – reiner Coach / Übersicht.";
+        adminBox.appendChild(foot);
+
+        wrap.appendChild(adminBox);
+
+        const { eloSteps } = rewardState;
+        if (eloSteps) {
+          const stepsTitle = document.createElement("div");
+          stepsTitle.className = "section-title";
+          stepsTitle.textContent = "Elo Steps – Own Grind";
+          wrap.appendChild(stepsTitle);
+
+          const stepsSubtitle = document.createElement("div");
+          stepsSubtitle.className = "section-subtitle";
+          stepsSubtitle.textContent = "100er Steps bis 2000 Rapid / 3000 Taktik – nur Motivation, kein Geld.";
+          wrap.appendChild(stepsSubtitle);
+
+          const stepsBox = document.createElement("div");
+          stepsBox.className = "admin-summary admin-steps";
+
+          const stepContainer = document.createElement("div");
+          stepContainer.className = "step-sections";
+
+          const mapping = [
+            { key: "rapid", label: "Rapid-Elo" },
+            { key: "tactics", label: "Taktik-Elo" }
+          ];
+
+          mapping.forEach(cfg => {
+            const group = eloSteps[cfg.key];
+            if (!group) return;
+
+            const section = document.createElement("div");
+            section.className = "step-section";
+
+            const headerSteps = document.createElement("div");
+            headerSteps.className = "step-header";
+
+            const leftLabel = document.createElement("div");
+            leftLabel.className = "step-label";
+            leftLabel.textContent = cfg.label;
+
+            const rightInfo = document.createElement("div");
+            rightInfo.innerHTML = `
+              <span class="step-current">${group.current ?? "–"} Elo</span>
+              <span class="step-summary">
+                · Steps erreicht: ${group.total}
+              </span>
+            `;
+
+            headerSteps.appendChild(leftLabel);
+            headerSteps.appendChild(rightInfo);
+            section.appendChild(headerSteps);
+
+            const grid = document.createElement("div");
+            grid.className = "step-grid";
+
+            group.details.forEach(step => {
+              const item = document.createElement("div");
+              let cls = "step-locked";
+              if (step.status === "paid" || step.status === "open" || step.status === "baseline") {
+                cls = "step-open";
+              }
+              item.className = `step-item ${cls}`;
+              item.title = `${cfg.label}: ${step.rating} Elo`;
+              item.innerHTML = `<span>${step.rating}</span>`;
+              grid.appendChild(item);
+            });
+
+            section.appendChild(grid);
+            stepContainer.appendChild(section);
+          });
+
+          stepsBox.appendChild(stepContainer);
+          wrap.appendChild(stepsBox);
+        }
+
+        card.appendChild(wrap);
+        cards.appendChild(card);
+        return;
+      }
+
+      // Gemeinsamer Teil für ERR_Daemon + Kathi (Ratings + Badges)
       const modesTitle = document.createElement("div");
       modesTitle.className = "section-title";
-      modesTitle.textContent = "Ratings";
-      card.appendChild(modesTitle);
+      modesTitle.textContent = "Ratings & Games";
+      wrap.appendChild(modesTitle);
 
       const modesWrap = document.createElement("div");
       modesWrap.className = "modes";
@@ -1253,12 +1672,12 @@
         });
       }
 
-      card.appendChild(modesWrap);
+      wrap.appendChild(modesWrap);
 
       const achTitle = document.createElement("div");
       achTitle.className = "section-title";
       achTitle.textContent = "Badges";
-      card.appendChild(achTitle);
+      wrap.appendChild(achTitle);
 
       const achRow = document.createElement("div");
       achRow.className = "badge-row";
@@ -1278,208 +1697,330 @@
           achRow.appendChild(span);
         });
       }
-      card.appendChild(achRow);
+      wrap.appendChild(achRow);
 
-      const focusTitle = document.createElement("div");
-      focusTitle.className = "section-title";
-      focusTitle.textContent = "Fokus";
-      card.appendChild(focusTitle);
+      const isGfView = stats.username === GIRLFRIEND_USERNAME;
 
-      const focusInfo = buildFocus(stats, rewardState);
-      const focus = document.createElement("div");
-      focus.className = "focus";
-      focus.innerHTML = `<strong>${focusInfo.title}</strong> · ${focusInfo.text}`;
-      card.appendChild(focus);
+      // Freundin-View (Journey / Habits, kein Geld)
+      if (isGfView) {
+        const { eloSteps, rapidMilestones } = rewardState;
 
-      // Lebenszeit-Rewards – nicht für Chef
-      if (!rewardState.isChef) {
-        const rewardTitle = document.createElement("div");
-        rewardTitle.className = "section-title";
-        rewardTitle.textContent = "Belohnungen (Lifetime)";
-        card.appendChild(rewardTitle);
+        const journeyTitle = document.createElement("div");
+        journeyTitle.className = "section-title";
+        journeyTitle.textContent = "Rating Journey";
+        wrap.appendChild(journeyTitle);
 
-        const rewardBox = document.createElement("div");
-        rewardBox.className = "focus";
+        const journeyBox = document.createElement("div");
+        journeyBox.className = "admin-summary";
 
-        const { tactics, rapid, total, pending, rapidMilestones, eloSteps } = rewardState;
-        const activePending = pending && pending.status === "requested" ? pending : null;
+        const rapidGroup = eloSteps?.rapid;
+        const tacticsGroup = eloSteps?.tactics;
 
-        rewardBox.innerHTML = `
-          <div class="reward-row">
-            <span class="reward-label">Theorie:</span>
-            <span class="reward-value">${total.raw} €</span>
-            <span class="reward-label">Ausgezahlt:</span>
-            <span class="reward-value">${total.paid} €</span>
-          </div>
-          <div class="reward-row">
-            <span class="reward-label">Offen:</span>
-            <span class="reward-value">${total.unpaid} €</span>
-            <span class="reward-label">Taktik / Rapid:</span>
-            <span class="reward-value">${tactics.rewardRaw} / ${rapid.rewardRaw} €</span>
-          </div>
-        `;
+        if (rapidGroup) {
+          const headerJ = document.createElement("div");
+          headerJ.className = "gf-journey-header";
+          headerJ.innerHTML = `
+            <div class="gf-journey-label">⏱️ Rapid · <span>${rapidGroup.current ?? "–"} Elo</span></div>
+            <div class="gf-tagline">Road to 2000</div>
+          `;
+          journeyBox.appendChild(headerJ);
 
-        // Elo-Steps (Rapid & Taktik) – visual
-        if (eloSteps) {
-          const stepContainer = document.createElement("div");
-          stepContainer.className = "step-sections";
+          const grid = document.createElement("div");
+          grid.className = "step-grid";
 
-          const mapping = [
-            { key: "rapid", label: "Rapid-Elo Steps" },
-            { key: "tactics", label: "Taktik-Elo Steps" }
-          ];
-
-          mapping.forEach(cfg => {
-            const group = eloSteps[cfg.key];
-            if (!group) return;
-
-            const section = document.createElement("div");
-            section.className = "step-section";
-
-            const header = document.createElement("div");
-            header.className = "step-header";
-
-            const leftLabel = document.createElement("div");
-            leftLabel.className = "step-label";
-            leftLabel.textContent = cfg.label;
-
-            const rightInfo = document.createElement("div");
-            rightInfo.innerHTML = `
-              <span class="step-current">${group.current ?? "–"} Elo</span>
-              <span class="step-summary"> · ${group.paid}/${group.total} Steps bezahlt, ${group.open} offen</span>
-            `;
-
-            header.appendChild(leftLabel);
-            header.appendChild(rightInfo);
-            section.appendChild(header);
-
-            const grid = document.createElement("div");
-            grid.className = "step-grid";
-
-            group.details.forEach(step => {
-              const item = document.createElement("div");
-              let cls = "step-locked";
-              if (step.status === "paid") cls = "step-paid";
-              else if (step.status === "open") cls = "step-open";
-
-              item.className = `step-item ${cls}`;
-              item.title = `Step #${step.index} · ${step.rating} Elo`;
-              item.innerHTML = `<span>${step.rating}</span>`;
-              grid.appendChild(item);
-            });
-
-            section.appendChild(grid);
-            stepContainer.appendChild(section);
+          rapidGroup.details.forEach(step => {
+            const item = document.createElement("div");
+            let cls = "step-locked";
+            if (step.status === "paid" || step.status === "open" || step.status === "baseline") {
+              cls = "step-open";
+            }
+            item.className = `step-item ${cls}`;
+            item.innerHTML = `<span>${step.rating}</span>`;
+            grid.appendChild(item);
           });
 
-          rewardBox.appendChild(stepContainer);
+          journeyBox.appendChild(grid);
         }
 
-        // Rapid-Meilensteine: erreicht / bezahlt / offen
-        if (rapidMilestones && rapidMilestones.details && rapidMilestones.details.length) {
-          const msList = document.createElement("div");
-          msList.className = "weekly-goals";
+        if (tacticsGroup) {
+          const headerT = document.createElement("div");
+          headerT.className = "gf-journey-header";
+          headerT.innerHTML = `
+            <div class="gf-journey-label">🧠 Taktik · <span>${tacticsGroup.current ?? "–"} Elo</span></div>
+            <div class="gf-tagline">Brain Gains</div>
+          `;
+          journeyBox.appendChild(headerT);
+
+          const gridT = document.createElement("div");
+          gridT.className = "step-grid";
+
+          tacticsGroup.details.forEach(step => {
+            const item = document.createElement("div");
+            let cls = "step-locked";
+            if (step.status === "paid" || step.status === "open" || step.status === "baseline") {
+              cls = "step-open";
+            }
+            item.className = `step-item ${cls}`;
+            item.innerHTML = `<span>${step.rating}</span>`;
+            gridT.appendChild(item);
+          });
+
+          journeyBox.appendChild(gridT);
+        }
+
+        if (rapidMilestones && rapidMilestones.details) {
+          const dotsWrapper = document.createElement("div");
+          dotsWrapper.className = "gf-dot-row";
 
           rapidMilestones.details.forEach(ms => {
+            const dot = document.createElement("div");
+            dot.className = "gf-dot";
+            if (ms.paid || ms.reached) dot.classList.add("gf-dot-reached");
+            dot.title = `Rapid ${ms.rating}`;
+            dotsWrapper.appendChild(dot);
+          });
+
+          journeyBox.appendChild(dotsWrapper);
+
+          const note = document.createElement("div");
+          note.className = "gf-note";
+          note.textContent = "Gefüllte Punkte = Meilensteine, die du schon angestupst hast.";
+          journeyBox.appendChild(note);
+        }
+
+        wrap.appendChild(journeyBox);
+
+        if (weeklyState) {
+          const habitsTitle = document.createElement("div");
+          habitsTitle.className = "section-title";
+          habitsTitle.textContent = "Weekly Habits";
+          wrap.appendChild(habitsTitle);
+
+          const habitsBox = document.createElement("div");
+          habitsBox.className = "admin-summary";
+
+          const { weeklyStats, goalStates, weekKey } = weeklyState;
+
+          habitsBox.innerHTML = `
+            <div style="font-size:0.74rem;margin-bottom:0.2rem;">
+              ${weekKey} · ${weeklyStats.totalGamesWeek} Games (${weeklyStats.rapidGamesWeek} Rapid) · ${weeklyStats.activeDaysCount}/7 Tage
+            </div>
+          `;
+
+          const goalsDiv = document.createElement("div");
+          goalsDiv.className = "weekly-goals";
+
+          goalStates.forEach(g => {
             const row = document.createElement("div");
             row.className = "weekly-goal-row";
 
             const leftCol = document.createElement("div");
             leftCol.className = "weekly-goal-name";
-            leftCol.textContent = `Rapid ${ms.rating} (${ms.reward} €)`;
+            leftCol.textContent = g.label;
 
             const rightCol = document.createElement("div");
             rightCol.className = "weekly-goal-status";
 
-            if (ms.paid) {
-              rightCol.innerHTML = `<span class="status-paid">bezahlt</span>`;
-            } else if (ms.reached) {
-              rightCol.innerHTML = `<span class="status-ok">erreicht</span>`;
+            if (g.fulfilled) {
+              rightCol.innerHTML = `<span class="status-ok">✔</span>`;
             } else {
-              rightCol.innerHTML = `<span class="status-missing">offen</span>`;
+              rightCol.innerHTML = `<span class="status-missing">…</span>`;
             }
 
             row.appendChild(leftCol);
             row.appendChild(rightCol);
-            msList.appendChild(row);
+            goalsDiv.appendChild(row);
           });
 
-          rewardBox.appendChild(msList);
+          habitsBox.appendChild(goalsDiv);
+
+          wrap.appendChild(habitsBox);
         }
 
-        const chip = document.createElement("div");
-        let chipClass, chipText;
-        if (activePending) {
-          chipClass = "chip-requested";
-          chipText = `Claim offen: ${activePending.amount} €`;
-        } else if (total.unpaid > 0) {
-          chipClass = "chip-open";
-          chipText = `Offen: ${total.unpaid} €`;
-        } else {
-          chipClass = "chip-paid";
-          chipText = "Alles ausgezahlt.";
-        }
-        chip.className = `reward-chip ${chipClass}`;
-        chip.textContent = chipText;
-        rewardBox.appendChild(chip);
-
-        if (!activePending && total.unpaid > 0) {
-          const btn = document.createElement("button");
-          btn.className = "btn";
-          btn.textContent = `Claim (${total.unpaid} €)`;
-          btn.addEventListener("click", async () => {
-            btn.disabled = true;
-            await createLifetimeClaim(stats.username, rewardState);
-            location.reload();
-          });
-          rewardBox.appendChild(btn);
-        } else if (activePending) {
-          const btnPaid = document.createElement("button");
-          btnPaid.className = "btn";
-          btnPaid.textContent = `Ausgezahlt (${activePending.amount} €)`;
-          btnPaid.addEventListener("click", async () => {
-            btnPaid.disabled = true;
-            await markLifetimeClaimPaid(stats.username, rewardState);
-            location.reload();
-          });
-          rewardBox.appendChild(btnPaid);
-
-          const btnCancel = document.createElement("button");
-          btnCancel.className = "btn btn-danger";
-          btnCancel.textContent = "Reset";
-          btnCancel.addEventListener("click", async () => {
-            btnCancel.disabled = true;
-            await resetLifetimeClaim(stats.username);
-            location.reload();
-          });
-          rewardBox.appendChild(btnCancel);
-        }
-
-        card.appendChild(rewardBox);
+        card.appendChild(wrap);
+        cards.appendChild(card);
+        return;
       }
 
-      // Weekly – auch nicht für Chef
-      if (!weeklyState.isChef) {
+      // ERR_Daemon – Geld-/Claim-Übersicht
+      const rewardTitle = document.createElement("div");
+      rewardTitle.className = "section-title";
+      rewardTitle.textContent = "Lifetime Rewards";
+      wrap.appendChild(rewardTitle);
+
+      const rewardSubtitle = document.createElement("div");
+      rewardSubtitle.className = "section-subtitle";
+      rewardSubtitle.textContent = "Elo-Steps & Rapid-Meilensteine (bis 2000 Rapid / 3000 Taktik)";
+      wrap.appendChild(rewardSubtitle);
+
+      const rewardBox = document.createElement("div");
+      rewardBox.className = "admin-summary";
+
+      const { total, rapidMilestones, eloSteps, pending } = rewardState;
+      const activePending = pending && pending.status === "requested" ? pending : null;
+
+      if (eloSteps) {
+        const stepContainer = document.createElement("div");
+        stepContainer.className = "step-sections";
+
+        const mapping = [
+          { key: "rapid", label: "Rapid-Elo Steps" },
+          { key: "tactics", label: "Taktik-Elo Steps" }
+        ];
+
+        mapping.forEach(cfg => {
+          const group = eloSteps[cfg.key];
+          if (!group) return;
+
+          const section = document.createElement("div");
+          section.className = "step-section";
+
+          const headerSteps = document.createElement("div");
+          headerSteps.className = "step-header";
+
+          const leftLabel = document.createElement("div");
+          leftLabel.className = "step-label";
+          leftLabel.textContent = cfg.label;
+
+          const rightInfo = document.createElement("div");
+          rightInfo.innerHTML = `
+            <span class="step-current">${group.current ?? "–"} Elo</span>
+            <span class="step-summary">
+              · Steps bezahlt: ${group.paid} · offen: ${group.open}
+            </span>
+          `;
+
+          headerSteps.appendChild(leftLabel);
+          headerSteps.appendChild(rightInfo);
+          section.appendChild(headerSteps);
+
+          const grid = document.createElement("div");
+          grid.className = "step-grid";
+
+          group.details.forEach(step => {
+            const item = document.createElement("div");
+            let cls = "step-locked";
+            if (step.status === "paid") cls = "step-paid";
+            else if (step.status === "open") cls = "step-open";
+            else if (step.status === "baseline") cls = "step-baseline";
+
+            item.className = `step-item ${cls}`;
+            item.title = `${cfg.label}: ${step.rating} Elo`;
+            item.innerHTML = `<span>${step.rating}</span>`;
+            grid.appendChild(item);
+          });
+
+          section.appendChild(grid);
+          stepContainer.appendChild(section);
+        });
+
+        rewardBox.appendChild(stepContainer);
+      }
+
+      if (rapidMilestones && rapidMilestones.details && rapidMilestones.details.length) {
+        const msList = document.createElement("div");
+        msList.className = "weekly-goals";
+
+        rapidMilestones.details.forEach(ms => {
+          const row = document.createElement("div");
+          row.className = "weekly-goal-row";
+
+          const leftCol = document.createElement("div");
+          leftCol.className = "weekly-goal-name";
+          leftCol.textContent = `Rapid ${ms.rating} (${ms.reward} €)`;
+
+          const rightCol = document.createElement("div");
+          rightCol.className = "weekly-goal-status";
+
+          if (ms.paid) {
+            rightCol.innerHTML = `<span class="status-paid">bezahlt</span>`;
+          } else if (ms.reached) {
+            rightCol.innerHTML = `<span class="status-ok">erreicht</span>`;
+          } else {
+            rightCol.innerHTML = `<span class="status-missing">offen</span>`;
+          }
+
+          row.appendChild(leftCol);
+          row.appendChild(rightCol);
+          msList.appendChild(row);
+        });
+
+        rewardBox.appendChild(msList);
+      }
+
+      const chip = document.createElement("div");
+      let chipClass, chipText;
+      if (activePending) {
+        chipClass = "chip-requested";
+        chipText = `Claim offen: ${activePending.amount} €`;
+      } else if (total.unpaid > 0) {
+        chipClass = "chip-open";
+        chipText = `Offener Betrag: ${total.unpaid} € · schon gezahlt: ${total.paid} €`;
+      } else {
+        chipClass = "chip-paid";
+        chipText = `Alles ausgezahlt · Gesamt: ${total.raw} €`;
+      }
+      chip.className = `reward-chip ${chipClass}`;
+      chip.textContent = chipText;
+      rewardBox.appendChild(chip);
+
+      if (!activePending && total.unpaid > 0) {
+        const btn = document.createElement("button");
+        btn.className = "btn";
+        btn.textContent = `Claim (${total.unpaid} €)`;
+        btn.addEventListener("click", async () => {
+          btn.disabled = true;
+          await createLifetimeClaim(stats.username, rewardState);
+          location.reload();
+        });
+        rewardBox.appendChild(btn);
+      } else if (activePending) {
+        const btnPaid = document.createElement("button");
+        btnPaid.className = "btn";
+        btnPaid.textContent = `Ausgezahlt (${activePending.amount} €)`;
+        btnPaid.addEventListener("click", async () => {
+          btnPaid.disabled = true;
+          await markLifetimeClaimPaid(stats.username, rewardState);
+          location.reload();
+        });
+        rewardBox.appendChild(btnPaid);
+
+        const btnCancel = document.createElement("button");
+        btnCancel.className = "btn btn-danger";
+        btnCancel.textContent = "Reset";
+        btnCancel.addEventListener("click", async () => {
+          btnCancel.disabled = true;
+          await resetLifetimeClaim(stats.username);
+          location.reload();
+        });
+        rewardBox.appendChild(btnCancel);
+      }
+
+      wrap.appendChild(rewardBox);
+
+      if (weeklyState) {
         const weeklyTitle = document.createElement("div");
         weeklyTitle.className = "section-title";
         weeklyTitle.textContent = "Weekly Bonus";
-        card.appendChild(weeklyTitle);
+        wrap.appendChild(weeklyTitle);
 
         const weeklyBox = document.createElement("div");
-        weeklyBox.className = "focus";
+        weeklyBox.className = "admin-summary";
 
         const { weeklyStats, goalStates, unpaid, totalPaid, pending, claimPlan, weekKey } = weeklyState;
-        const activePending = pending && pending.status === "requested" ? pending : null;
+        const activePendingW = pending && pending.status === "requested" ? pending : null;
 
         weeklyBox.innerHTML = `
-          <div style="font-size:0.74rem;margin-bottom:0.25rem;">
+          <div style="font-size:0.74rem;margin-bottom:0.2rem;">
             ${weekKey} · ${weeklyStats.totalGamesWeek} G (${weeklyStats.rapidGamesWeek} Rapid) · ${weeklyStats.activeDaysCount}/7 Tage · TO: ${weeklyStats.timeoutsWeek}
           </div>
-          <div class="reward-row">
-            <span class="reward-label">Paid Woche:</span>
-            <span class="reward-value">${totalPaid} €</span>
-            <span class="reward-label">Offen:</span>
-            <span class="reward-value">${unpaid} €</span>
+          <div class="admin-row">
+            <div class="admin-label">Paid Woche</div>
+            <div class="admin-value">${totalPaid} €</div>
+          </div>
+          <div class="admin-row">
+            <div class="admin-label">Potenzial offen</div>
+            <div class="admin-value">${unpaid} €</div>
           </div>
         `;
 
@@ -1500,7 +2041,7 @@
           if (g.alreadyPaid) {
             rightCol.innerHTML = `<span class="status-paid">bezahlt</span>`;
           } else if (g.fulfilled) {
-            rightCol.innerHTML = `<span class="status-ok">ok</span>`;
+            rightCol.innerHTML = `<span class="status-ok">erreicht</span>`;
           } else {
             rightCol.innerHTML = `<span class="status-missing">offen</span>`;
           }
@@ -1512,23 +2053,23 @@
 
         weeklyBox.appendChild(goalsDiv);
 
-        const chip = document.createElement("div");
-        let chipClass, chipText;
-        if (activePending) {
-          chipClass = "chip-requested";
-          chipText = `Weekly-Claim: ${activePending.amount} €`;
+        const chipW = document.createElement("div");
+        let chipClassW, chipTextW;
+        if (activePendingW) {
+          chipClassW = "chip-requested";
+          chipTextW = `Weekly-Claim: ${activePendingW.amount} €`;
         } else if (unpaid > 0) {
-          chipClass = "chip-open";
-          chipText = `Offen: ${unpaid} €`;
+          chipClassW = "chip-open";
+          chipTextW = `Offen: ${unpaid} €`;
         } else {
-          chipClass = "chip-paid";
-          chipText = "Weekly voll.";
+          chipClassW = "chip-paid";
+          chipTextW = "Weekly voll.";
         }
-        chip.className = `reward-chip ${chipClass}`;
-        chip.textContent = chipText;
-        weeklyBox.appendChild(chip);
+        chipW.className = `reward-chip ${chipClassW}`;
+        chipW.textContent = chipTextW;
+        weeklyBox.appendChild(chipW);
 
-        if (!activePending && claimPlan.amount > 0) {
+        if (!activePendingW && claimPlan.amount > 0) {
           const btn = document.createElement("button");
           btn.className = "btn";
           btn.textContent = `Claim (${claimPlan.amount} €)`;
@@ -1538,10 +2079,10 @@
             location.reload();
           });
           weeklyBox.appendChild(btn);
-        } else if (activePending) {
+        } else if (activePendingW) {
           const btnPaid = document.createElement("button");
           btnPaid.className = "btn";
-          btnPaid.textContent = `Ausgezahlt (${activePending.amount} €)`;
+          btnPaid.textContent = `Ausgezahlt (${activePendingW.amount} €)`;
           btnPaid.addEventListener("click", async () => {
             btnPaid.disabled = true;
             await markWeeklyClaimPaid(stats.username, weeklyState);
@@ -1560,73 +2101,56 @@
           weeklyBox.appendChild(btnCancel);
         }
 
-        card.appendChild(weeklyBox);
+        wrap.appendChild(weeklyBox);
       }
 
+      card.appendChild(wrap);
       cards.appendChild(card);
-    }
-
-    function renderSquad(players) {
-      const container = document.getElementById("squad");
-      container.innerHTML = "";
-
-      const card = document.createElement("div");
-      card.className = "squad-card";
-
-      const title = document.createElement("div");
-      title.className = "squad-title";
-      title.innerHTML = "💬 Squad-Overview";
-      card.appendChild(title);
-
-      const list = document.createElement("div");
-      list.className = "squad-list";
-
-      const allModes = [];
-      players.forEach(p => p.stats.modes.forEach(m => allModes.push({ player: p.stats.username, ...m })));
-      const rapid = allModes.filter(m => m.key === "chess_rapid" && m.current != null);
-      if (rapid.length) {
-        rapid.sort((a, b) => b.current - a.current);
-        const r = rapid[0];
-        list.innerHTML += `<div>🏆 Rapid-Top: <strong>${r.player}</strong> (${r.current})</div>`;
-      }
-
-      const activeCount = players.filter(p => p.stats.active).length;
-      list.innerHTML += `<div>📆 Aktiv: <strong>${activeCount}/${players.length}</strong></div>`;
-
-      card.appendChild(list);
-      container.appendChild(card);
     }
 
     async function init() {
       const subtitle = document.getElementById("subtitle");
-      subtitle.textContent = "Lade Chess.com & Firestore…";
+      try {
+        subtitle.textContent = "Lade Chess.com & Firestore…";
+        const { weekKey } = getCurrentWeekRange();
+        const playersCombined = [];
 
-      const { weekKey } = getCurrentWeekRange();
-      const playersCombined = [];
+        for (const name of PLAYERS) {
+          try {
+            const stats = await loadChessStats(name);
+            const [rewardDoc, weeklyStats, weeklyDoc] = await Promise.all([
+              loadRewardDoc(name, stats.tacticsRating, stats.rapidRating),
+              loadWeeklyStats(name),
+              loadWeeklyDoc(name, weekKey)
+            ]);
 
-      for (const name of PLAYERS) {
-        try {
-          const stats = await loadChessStats(name);
-          const [rewardDoc, weeklyStats, weeklyDoc] = await Promise.all([
-            loadRewardDoc(name, stats.tacticsRating, stats.rapidRating),
-            loadWeeklyStats(name),
-            loadWeeklyDoc(name, weekKey)
-          ]);
+            const rewardState = computeRewardState(name, stats.tacticsRating, stats.rapidRating, rewardDoc);
+            const weeklyState = computeWeeklyState(name, weeklyStats, weeklyDoc, weekKey);
 
-          const rewardState = computeRewardState(name, stats.tacticsRating, stats.rapidRating, rewardDoc);
-          const weeklyState = computeWeeklyState(name, weeklyStats, weeklyDoc, weekKey);
-
-          playersCombined.push({ stats, rewardState, weeklyState });
-          renderPlayerCard(stats, rewardState, weeklyState);
-        } catch (e) {
-          console.error("Fehler bei Spieler", name, e);
+            playersCombined.push({ stats, rewardState, weeklyState });
+          } catch (e) {
+            console.error("Fehler bei Spieler", name, e);
+          }
         }
+
+        playersCombined
+          .sort((a, b) => {
+            const order = (player) => {
+              if (player.stats.username === PAY_USER_USERNAME) return 0;
+              if (player.stats.username === GIRLFRIEND_USERNAME) return 1;
+              if (player.stats.username === CHEF_USERNAME) return 2;
+              return 3;
+            };
+            return order(a) - order(b);
+          })
+          .forEach(p => renderPlayerCard(p.stats, p.rewardState, p.weeklyState));
+
+        const now = new Date();
+        subtitle.textContent = `Stand: ${now.toLocaleString()}`;
+      } catch (e) {
+        console.error(e);
+        subtitle.textContent = "Fehler beim Laden (siehe Konsole)";
       }
-
-      renderSquad(playersCombined);
-
-      const now = new Date();
-      subtitle.textContent = `Stand: ${now.toLocaleString()}`;
     }
 
     init();

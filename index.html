@@ -225,6 +225,109 @@ body {
     margin-bottom: 0.3rem;
   }
 
+  .card-header-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .expand-toggle {
+    border-radius: 999px;
+    border: 1px solid rgba(148,163,184,0.5);
+    background: rgba(15,23,42,0.7);
+    color: #e5e7eb;
+    font-size: 0.68rem;
+    padding: 0.18rem 0.55rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .expand-toggle:hover {
+    border-color: #60a5fa;
+  }
+
+  .card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .card.expandable .card-content {
+    max-height: 2000px;
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      max-height 220ms ease,
+      opacity 180ms ease,
+      transform 180ms ease;
+    overflow: hidden;
+  }
+
+  .card.expandable.collapsed .card-content {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-6px);
+    pointer-events: none;
+  }
+
+  .card.expandable .status-badge {
+    box-shadow: 0 0 16px rgba(59,130,246,0.25);
+  }
+
+  .showcase .card-spotlight {
+    border-color: rgba(34,197,94,0.9);
+    box-shadow:
+      0 30px 80px rgba(22,163,74,0.55),
+      0 0 60px rgba(34,197,94,0.25);
+    transform: translateY(-6px) scale(1.02);
+    background: radial-gradient(circle at top left, #052e16, #020617 55%);
+  }
+
+  .showcase .card-spotlight::before {
+    background:
+      radial-gradient(circle at 0% 0%, rgba(34,197,94,0.35), transparent 60%),
+      radial-gradient(circle at 100% 0%, rgba(250,204,21,0.25), transparent 55%);
+    opacity: 0.95;
+  }
+
+  .showcase .grid {
+    grid-template-columns: minmax(320px, 860px);
+    justify-content: center;
+  }
+
+  .showcase .side-badge {
+    position: fixed;
+    top: 50%;
+    width: min(280px, 32vw);
+    transform: translateY(-50%);
+    z-index: 2;
+  }
+
+  .showcase .side-left {
+    left: 1.5rem;
+  }
+
+  .showcase .side-right {
+    right: 1.5rem;
+  }
+
+  .showcase .side-badge.card {
+    box-shadow: 0 18px 50px rgba(0,0,0,0.7);
+  }
+
+  @media (max-width: 900px) {
+    .showcase .grid {
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    .showcase .side-badge {
+      position: static;
+      width: 100%;
+      transform: none;
+    }
+  }
+
   .card-title-block {
     display: flex;
     align-items: center;
@@ -795,25 +898,23 @@ body {
   }
 
 /* 3D Chessboard im Hintergrund */
+/* HINTERGRUND-BRETT: fest am unteren Rand kleben */
 .chessboard-bg {
-  position: absolute;
-  top: 0;
+  position: fixed;
   left: 0;
-  width: 100%;
-  inset: 0;
+  right: 0;
+  bottom: 0;              /* unten fest */
+  height: 55vh;           /* wie hoch das Brett nach oben ragt */
   display: flex;
   justify-content: center;
-  align-items: center;
-
+  align-items: flex-end;  /* Brett an den unteren Rand des Containers */
   pointer-events: none;
-
-  /* ganz sicher sichtbar */
   z-index: 0;
 }
 
-
+/* Brett selbst */
 .chessboard {
-  width: min(95vw, 1100px);     /* deutlich größer */
+  width: min(95vw, 3100px);
   aspect-ratio: 1 / 1;
   display: grid;
   grid-template-columns: repeat(8, 2fr);
@@ -821,15 +922,21 @@ body {
   border-radius: 18px;
   overflow: hidden;
   border: 2px solid rgba(148,163,184,0.6);
-
   background:
     radial-gradient(circle at 50% 0%, rgba(255,255,255,0.12), transparent 55%),
     radial-gradient(circle at 50% 100%, rgba(0,0,0,0.6), rgba(0,0,0,1));
 
-  transform: none;
-
-
+  /* WICHTIG: Drehpunkt ist die Unterkante → bleibt unten kleben */
+  transform-origin: 50% 100%;
+  animation: boardFloat 18s ease-in-out infinite;
   filter: drop-shadow(0 80px 120px rgba(0,0,0,0.9));
+}
+
+/* leichte Bewegung, aber Unterkante bleibt unten */
+@keyframes boardFloat {
+  0%   { transform: perspective(1400px) rotateX(78deg); }
+  50%  { transform: perspective(1400px) rotateX(80deg); }
+  100% { transform: perspective(1400px) rotateX(78deg); }
 }
 
 
@@ -952,6 +1059,7 @@ body {
     const CHEF_USERNAME = "M41K";
     const PAY_USER_USERNAME = "ERR_Daemon";
     const GIRLFRIEND_USERNAME = "Kathi_2905";
+    const BASELINE_RESET_USERS = new Set(["ERR_Daemon"]);
 
     const MODES = [
       { key: "chess_rapid", label: "Rapid",  icon: "⏱️" },
@@ -1065,14 +1173,21 @@ body {
       };
     }
 
+    function normalizeBaseline(rating) {
+      if (rating == null || Number.isNaN(rating)) return 0;
+      const base = rating - (rating % 100);
+      if (rating % 100 === 0) return Math.max(0, base - 100);
+      return base;
+    }
+
     async function loadRewardDoc(username, tacticsRating, rapidRating) {
       const id = username.toLowerCase();
       const ref = doc(db, REWARD_COLLECTION, id);
       const snap = await getDoc(ref);
 
       if (!snap.exists()) {
-        const baselineTactics = tacticsRating ?? 0;
-        const baselineRapid   = rapidRating ?? 0;
+        const baselineTactics = normalizeBaseline(tacticsRating ?? 0);
+        const baselineRapid   = normalizeBaseline(rapidRating ?? 0);
         const initData = {
           baselineTactics,
           baselineRapid,
@@ -1087,7 +1202,53 @@ body {
         return initData;
       }
 
-      return snap.data();
+      const data = snap.data();
+
+      if (!data.baselineMigrated) {
+        const updates = {};
+
+        if (tacticsRating != null &&
+            data.baselineTactics === tacticsRating &&
+            tacticsRating % 100 === 0) {
+          updates.baselineTactics = Math.max(0, tacticsRating - 100);
+        }
+
+        if (rapidRating != null &&
+            data.baselineRapid === rapidRating &&
+            rapidRating % 100 === 0) {
+          updates.baselineRapid = Math.max(0, rapidRating - 100);
+        }
+
+        updates.baselineMigrated = true;
+
+        if (Object.keys(updates).length) {
+          await updateDoc(ref, {
+            ...updates,
+            updatedAt: serverTimestamp()
+          });
+          return { ...data, ...updates };
+        }
+      }
+
+      if (BASELINE_RESET_USERS.has(username) && !data.baselineResetApplied) {
+        const updates = { baselineResetApplied: true };
+
+        if (tacticsRating != null) {
+          const resetBase = Math.max(0, (Math.floor(tacticsRating / 100) - 1) * 100);
+          updates.baselineTactics = resetBase;
+          updates.tacticsStepsClaimed = 0;
+        }
+
+        if (Object.keys(updates).length > 1) {
+          await updateDoc(ref, {
+            ...updates,
+            updatedAt: serverTimestamp()
+          });
+          return { ...data, ...updates };
+        }
+      }
+
+      return data;
     }
 
     // Steps, jetzt mit maxRating-Parameter (Rapid 2000, Taktik 3000)
@@ -1713,9 +1874,12 @@ body {
       const isGf = stats.username === GIRLFRIEND_USERNAME;
       const isPayUser = stats.username === PAY_USER_USERNAME;
 
-      if (isChef) card.classList.add("card-admin");
-      else if (isPayUser) card.classList.add("card-pay");
-      else if (isGf) card.classList.add("card-gf");
+      if (isChef) card.classList.add("card-admin", "side-badge", "side-right");
+      else if (isPayUser) card.classList.add("card-pay", "card-spotlight");
+      else if (isGf) card.classList.add("card-gf", "side-badge", "side-left");
+
+      const isExpandable = isChef || isGf;
+      if (isExpandable) card.classList.add("expandable", "collapsed");
 
       const wrap = document.createElement("div");
       wrap.className = "card-inner";
@@ -1754,9 +1918,32 @@ body {
         status.classList.add(stats.active ? "status-active" : "status-chill");
         status.textContent = stats.active ? "AKTIV" : "PAUSE";
       }
-      header.appendChild(status);
+      const actions = document.createElement("div");
+      actions.className = "card-header-actions";
+      actions.appendChild(status);
+
+      if (isExpandable) {
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "expand-toggle";
+        toggle.textContent = "Details";
+        toggle.setAttribute("aria-expanded", "false");
+        toggle.addEventListener("click", () => {
+          const expanded = card.classList.toggle("expanded");
+          card.classList.toggle("collapsed", !expanded);
+          toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+          toggle.textContent = expanded ? "Schließen" : "Details";
+          updateShowcase();
+        });
+        actions.appendChild(toggle);
+      }
+
+      header.appendChild(actions);
 
       wrap.appendChild(header);
+
+      const content = document.createElement("div");
+      content.className = "card-content";
 
       // Admin / M41K
       if (isChef) {
@@ -1870,18 +2057,18 @@ body {
         foot.textContent = "";
         adminBox.appendChild(foot);
 
-        wrap.appendChild(adminBox);
+        content.appendChild(adminBox);
 
         const { eloSteps } = rewardState;
         if (eloSteps) {
           const stepsTitle = document.createElement("div");
           stepsTitle.className = "section-title";
           stepsTitle.textContent = "Elo Steps";
-          wrap.appendChild(stepsTitle);
+          content.appendChild(stepsTitle);
 
           const stepsSubtitle = document.createElement("div");
           stepsSubtitle.className = "section-subtitle";
-          wrap.appendChild(stepsSubtitle);
+          content.appendChild(stepsSubtitle);
 
           const stepsBox = document.createElement("div");
           stepsBox.className = "admin-summary admin-steps";
@@ -1944,9 +2131,10 @@ body {
           });
 
           stepsBox.appendChild(stepContainer);
-          wrap.appendChild(stepsBox);
+          content.appendChild(stepsBox);
         }
 
+        wrap.appendChild(content);
         card.appendChild(wrap);
         cards.appendChild(card);
         return;
@@ -1956,7 +2144,7 @@ body {
       const modesTitle = document.createElement("div");
       modesTitle.className = "section-title";
       modesTitle.textContent = "Ratings & Games";
-      wrap.appendChild(modesTitle);
+      content.appendChild(modesTitle);
 
       const modesWrap = document.createElement("div");
       modesWrap.className = "modes";
@@ -2023,12 +2211,12 @@ body {
         });
       }
 
-      wrap.appendChild(modesWrap);
+      content.appendChild(modesWrap);
 
       const achTitle = document.createElement("div");
       achTitle.className = "section-title";
       achTitle.textContent = "Badges";
-      wrap.appendChild(achTitle);
+      content.appendChild(achTitle);
 
       const achRow = document.createElement("div");
       achRow.className = "badge-row";
@@ -2051,7 +2239,7 @@ body {
           achRow.appendChild(span);
         });
       }
-      wrap.appendChild(achRow);
+      content.appendChild(achRow);
 
       const isGfView = stats.username === GIRLFRIEND_USERNAME;
 
@@ -2062,7 +2250,7 @@ body {
         const journeyTitle = document.createElement("div");
         journeyTitle.className = "section-title";
         journeyTitle.textContent = "Rating Journey";
-        wrap.appendChild(journeyTitle);
+        content.appendChild(journeyTitle);
 
         const journeyBox = document.createElement("div");
         journeyBox.className = "admin-summary";
@@ -2159,13 +2347,13 @@ body {
           journeyBox.appendChild(dotsWrapper);
         }
 
-        wrap.appendChild(journeyBox);
+        content.appendChild(journeyBox);
 
         if (weeklyState) {
           const habitsTitle = document.createElement("div");
           habitsTitle.className = "section-title";
           habitsTitle.textContent = "Weekly Habits";
-          wrap.appendChild(habitsTitle);
+          content.appendChild(habitsTitle);
 
           const habitsBox = document.createElement("div");
           habitsBox.className = "admin-summary";
@@ -2205,9 +2393,10 @@ body {
 
           habitsBox.appendChild(goalsDiv);
 
-          wrap.appendChild(habitsBox);
+          content.appendChild(habitsBox);
         }
 
+        wrap.appendChild(content);
         card.appendChild(wrap);
         cards.appendChild(card);
         return;
@@ -2217,12 +2406,12 @@ body {
       const rewardTitle = document.createElement("div");
       rewardTitle.className = "section-title";
       rewardTitle.textContent = "Lifetime Rewards";
-      wrap.appendChild(rewardTitle);
+      content.appendChild(rewardTitle);
 
       const rewardSubtitle = document.createElement("div");
       rewardSubtitle.className = "section-subtitle";
       rewardSubtitle.textContent = "Elo-Steps & Rapid-Meilensteine";
-      wrap.appendChild(rewardSubtitle);
+      content.appendChild(rewardSubtitle);
 
       const rewardBox = document.createElement("div");
       rewardBox.className = "admin-summary";
@@ -2410,13 +2599,13 @@ body {
         rewardBox.appendChild(btnCancel);
       }
 
-      wrap.appendChild(rewardBox);
+      content.appendChild(rewardBox);
 
       if (weeklyState) {
         const weeklyTitle = document.createElement("div");
         weeklyTitle.className = "section-title";
         weeklyTitle.textContent = "Weekly Bonus";
-        wrap.appendChild(weeklyTitle);
+        content.appendChild(weeklyTitle);
 
         const weeklyBox = document.createElement("div");
         weeklyBox.className = "admin-summary";
@@ -2551,11 +2740,17 @@ body {
           weeklyBox.appendChild(btnCancel);
         }
 
-        wrap.appendChild(weeklyBox);
+        content.appendChild(weeklyBox);
       }
 
+      wrap.appendChild(content);
       card.appendChild(wrap);
       cards.appendChild(card);
+    }
+
+    function updateShowcase() {
+      const anyExpanded = document.querySelector(".card.expandable.expanded");
+      document.body.classList.toggle("showcase", !anyExpanded);
     }
 
     async function init() {
@@ -2594,6 +2789,8 @@ body {
             return order(a) - order(b);
           })
           .forEach(p => renderPlayerCard(p.stats, p.rewardState, p.weeklyState));
+
+        updateShowcase();
 
         const now = new Date();
         subtitle.textContent = `Stand: ${now.toLocaleString()}`;
